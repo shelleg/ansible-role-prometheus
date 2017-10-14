@@ -3,27 +3,22 @@
   become: true
   tasks:
   roles:
-    # - role: ansible-role-prometheus
-    #   prometheus_skip_config: true
-    #
-    # - role: ansible-role-prometheus
-    #   promehtues_use_role_rules: true
-     - role: shelleg.ntp
-     - role: shelleg.cratedb
-       crate_adapter_testing: true
-       cratedb_adapter_prometheus_init: true
-     - role: ansible-role-prometheus
-       prometheus_cratedb_remote_write: true
-       prometheus_cratedb_remote_read: true
-       prometheus_components:
-         - alertmanager
-         - node_exporter
-         - prometheus
-         - crate_adapter
-       promehtues_use_role_rules: true
-       prometheus_static_targets:
-       - { name: traefik,
-           host: traefik.mydomain.com,
-           port: 8080,
-           metrics_path: /metrics
-           }
+    - role: shelleg.ntp
+    - role: shelleg.cratedb
+      crate_adapter_testing: true
+      cratedb_adapter_prometheus_init: true
+    - role: ansible-role-prometheus
+      prometheus_cratedb_remote_write: true
+      prometheus_cratedb_remote_read: true
+      prometheus_components:
+        - alertmanager
+        - node_exporter
+        - prometheus
+        - crate_adapter
+      promehtues_use_role_rules: true
+      prometheus_static_targets:
+      - { name: traefik,
+          host: traefik.mydomain.com,
+          port: 8080,
+          metrics_path: /metrics
+        }
