@@ -1,0 +1,8 @@
+---
+prometheus_requirements:
+  - debian-archive-keyring
+  - apt-transport-https
+  - prometheus
+
+prometheus_repo: "deb http://deb.robustperception.io/ precise nightly"
+prometheus_systemd_dir: /lib/systemd/system/

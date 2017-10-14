@@ -1,0 +1,37 @@
+---
+- name: "Install apt requirements"
+  apt:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - "{{ prometheus_requirements }}"
+
+- name: "Import apt key"
+  apt_key:
+    url: https://s3-eu-west-1.amazonaws.com/deb.robustperception.io/41EFC99D.gpg
+    state: present
+  become: yes
+
+- name: "Enable apt repository"
+  apt_repository:
+    repo: "{{ prometheus_repo }}"
+    update_cache: yes
+    state: present
+
+- name: "Install prometheus components (- node-exporter )"
+  apt:
+    name: "{{ item }}"
+    state: installed
+    update_cache: yes
+  with_items:
+    - "{{ prometheus_components }}"
+  when: "{{ item }} != 'node_exporter'"
+
+- name: "Install prometheus components (+ node-exporter )"
+  apt:
+    name: "node-exporter"
+    state: installed
+    update_cache: yes
+  with_items:
+    - "{{ prometheus_components }}"
+  when: "{{ item }} = 'node_exporter'"

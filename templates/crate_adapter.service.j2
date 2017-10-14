@@ -1,0 +1,19 @@
+# -*- mode: conf -*-
+# /usr/lib/systemd/system/crate_adapter.service is {{ ansible_managed }}
+
+[Unit]
+Description=CrateDB adapter for Prometheus
+Documentation=
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/crate_adapter
+User=prometheus
+ExecStart=/usr/bin/crate_adapter \
+          {%for flag in prometheus_crate_adapter_opts %}-{{ flag }} \
+          {% endfor %}
+          $CRATE_ADAPTER_OPTS
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

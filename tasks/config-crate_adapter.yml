@@ -1,0 +1,5 @@
+---
+- name: "set crate_adapter service"
+  template:
+    src: crate_adapter.service.j2
+    dest: "{{ prometheus_systemd_dir }}/crate_adapter.service"

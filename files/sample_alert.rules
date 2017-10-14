@@ -1,0 +1,187 @@
+ALERT HighErrorRate
+  IF sum by(job,path)(rate(http_requests_total{status=~"5.."}[5m])) /
+     sum by(job,path)(rate(http_requests_total[5m]))*100 > 1
+  FOR 10m
+  ANNOTATIONS {
+    summary = "high number of 5xx errors",
+    description = "{{$labels.job}} has {{$value}}% 5xx errors on {{$labels.path}}"
+  }
+
+ALERT DailyTest
+  IF vector(1) > 0
+  FOR 1m
+  ANNOTATIONS {
+    summary = "daily alert test",
+    description = "daily alert test"
+  }
+ALERT service_down
+  IF up == 0
+  LABELS {
+    severity = "major",
+    value = "{{$value}}",
+  }
+
+ALERT service_up
+  IF up == 1
+  LABELS {
+    severity = "ok",
+    value = "{{$value}}",
+  }
+
+ALERT high_load
+  IF node_load1 > 0.5
+  ANNOTATIONS {
+      summary = "Instance {{ $labels.instance }} under high load",
+      description = "{{ $labels.instance }} of job {{ $labels.job }} is under high load.",
+  }
+
+ALERT ApiRequestsHigh
+IF alerta_alerts_total > 1
+LABELS {
+  service = "Alerta",
+  severity = "major",
+  value = "{{$value}} req/s"
+}
+ANNOTATIONS {
+  summary = "API request rate high",
+  description = "API request rate of {{$value}} req/s is high (threshold 3 req/s)",
+  runbook = "http://wiki/runbook"
+}
+
+ALERT Test
+IF alerta_alerts_total > 0
+LABELS {
+  service = "Alerta",
+  severity = "warning",
+  value = "{{$value}}"
+}
+ANNOTATIONS {
+  summary = "API request rate high",
+  description = "API request rate of {{$value}} req/s is high (threshold 3 req/s)",
+  runbook = "http://"
+}
+
+ALERT CompleteAlert
+  IF alerta_alerts_total > 0
+  LABELS {
+    service = "Web",
+    severity = "minor",
+    value = "{{$value}}",
+  }
+  ANNOTATIONS {
+    summary = "alert triggered",
+    description = "complete alert triggered at {{$value}}",
+  }
+
+#ALERT service_down
+#  IF up == 0
+
+#ALERT high_load
+#  IF node_load1 > 0.5
+#  ANNOTATIONS {
+#      summary = "Instance {{ $labels.instance }} under high load",
+#      description = "{{ $labels.instance }} of job {{ $labels.job }} is under high load.",
+#  }
+
+#ALERT piwik_nginx
+#  IF count(time() - container_last_seen{name=~"^piwik_nginx.*"} < 60)
+#  ANNOTATIONS {
+#    summary = "piwik_nginx container is down",
+#    description = "piwik_nginx is down for more tha 1 minute",
+#  }
+
+ALERT high_cpu_usage_on_node
+  IF sum(rate(process_cpu_seconds_total[5m])) by (instance) * 100 > 70
+  FOR 5m
+  ANNOTATIONS {
+      summary = "HIGH CPU USAGE WARNING ON '{{ $labels.instance }}'",
+      description = "{{ $labels.instance }} is using a LOT of CPU. CPU usage is {{ humanize $value}}%.",
+  }
+
+ALERT high_memory_usage_on_node
+  IF ((node_memory_MemTotal-node_memory_MemAvailable)/node_memory_MemTotal)*100 > 80
+  FOR 5m
+  ANNOTATIONS {
+      summary = "HIGH MEMORY USAGE WARNING TASK ON '{{ $labels.host }}'",
+      description = "{{ $labels.instance }} is using a LOT of MEMORY. MEMORY usage is over {{ humanize $value}}%.",
+  }
+
+ALERT high_la_usage_on_node
+  IF node_load5 > 5
+  FOR 5m
+  ANNOTATIONS {
+      summary = "HIGH LOAD AVERAGE WARNING ON '{{ $labels.instance }}'",
+      description = "{{ $labels.instance }} has a high load average. Load Average 5m is {{ humanize $value}}.",
+  }
+
+ALERT monitoring_service_down
+  IF up == 0
+  FOR 5m
+  ANNOTATIONS {
+      summary = "MONITORING SERVICE DOWN WARNING: NODE '{{ $labels.host }}'",
+      description = "The monitoring service '{{ $labels.job }}' is down.",
+  }
+
+ALERT node_running_out_of_disk_space
+  IF (node_filesystem_size{mountpoint="/"} - node_filesystem_free{mountpoint="/"}) * 100/ node_filesystem_size{mountpoint="/"} > 80
+  FOR 5m
+  ANNOTATIONS {
+      summary = "LOW DISK SPACE WARING: NODE '{{ $labels.host }}'",
+      description = "More than 80% of disk used. Disk usage {{ humanize $value }}%.",
+  }
+
+ALERT disk_will_fill_in_8_hours
+   IF predict_linear(node_filesystem_free{mountpoint="/"}[1h], 8*3600) < 0
+   FOR 5m
+   ANNOTATIONS {
+       summary = "DISK SPACE FULL IN 8 HOURS: NODE '{{ $labels.host }}'",
+       description = "{{ $labels.instance }} is writing a lot.",
+}
+
+ALERT high_cpu_usage_on_container
+  IF sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_swarm_task_name=~".+"}[5m])) by (container_label_com_docker_swarm_task_name,instance) * 100 > 200
+  FOR 5m
+  ANNOTATIONS {
+      summary = "HIGH CPU USAGE WARNING: TASK '{{ $labels.container_label_com_docker_swarm_task_name }}' on '{{ $labels.instance }}'",
+      description = "{{ $labels.container_label_com_docker_swarm_task_name }} is using a LOT of CPU. CPU usage is {{ humanize $value}}%.",
+  }
+
+ALERT container_eating_memory
+  IF sum(container_memory_rss{container_label_com_docker_swarm_task_name=~".+"}) by (instance,name) > 2500000000
+  FOR 5m
+  ANNOTATIONS {
+      summary = "HIGH MEMORY USAGE WARNING: TASK '{{ $labels.container_label_com_docker_swarm_task_name }}' on '{{ $labels.instance }}'",
+      description = "{{ $labels.container_label_com_docker_swarm_task_name }} is eating up a LOT of memory. Memory consumption of {{ $labels.container_label_com_docker_swarm_task_name }} is at {{ humanize $value}}.",
+}
+
+ALERT site_down
+  IF probe_success == 0
+  FOR 5m
+  ANNOTATIONS {
+    description="{{$labels.instance}} has been down for more than 10 minutes.",
+    summary="{{$labels.instance}} down"
+  }
+
+ALERT container_missing_in_piwik_stack
+  IF count(container_last_seen{container_label_com_docker_stack_namespace="piwik"}) < 3
+  FOR 5m
+  ANNOTATIONS {
+    summary="A container is missing in Piwik stack",
+    description="There are less than three container in the Piwik stack"
+  }
+
+#ALERT missing_node_exporter
+#  IF count(container_last_seen{container_label_com_docker_stack_namespace="prometheus",container_label_com_docker_swarm_service_name=~".*node.*exporter.*") < count(swarm_node_info)
+#  FOR 5m
+#  ANNOTATIONS {
+#    summary="A container a node exporter is missing",
+#    description="A node-expoter container is not running on a host"
+#  }
+
+ALERT container_not_in_running_state
+  IF sum(container_tasks_state{state!="running"}) by (container_label_com_docker_stack_namespace) > 0
+  FOR 1m
+  ANNOTATIONS {
+      summary = "Container not in running state in stack '{{ $labels.container_label_com_docker_swarm_task_name }}' on '{{ $labels.instance }}'",
+      description = "{{ $labels.container_label_com_docker_swarm_task_name }} has a container not in running state on {{ $labels.instance }}"
+  }

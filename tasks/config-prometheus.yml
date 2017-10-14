@@ -1,0 +1,53 @@
+---
+- name: "crate additional directories"
+  file:
+    path: "{{ dirname }}"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0755
+  with_items:
+    - "{{ prometheus_file_sd_config_path }}"
+    - "{{ prometheus_rules_dir }}"
+  loop_control:
+      loop_var: dirname
+
+- name: "set prometheus service"
+  template:
+    src: prometheus.service.j2
+    dest: "{{ prometheus_systemd_dir }}/prometheus.service"
+  notify:
+    - reload prometheus
+
+- name: "Copy rule files from playbook's, if any"
+  copy:
+    src: "{{ rule.value.src }}"
+    dest: "{{ prometheus_rules_dir }}/{{ rule.value.dest }}"
+    validate: "promtool check-rules %s"
+  with_dict: '{{ prometheus_rule_files }}'
+  notify:
+    - reload prometheus
+  when: promehtues_use_role_rules
+  loop_control:
+      loop_var: rule
+
+- name: "Create sd_files"
+  include: sd-create.yml
+  vars:
+    args: "{{ sd }}"
+  with_items: '{{ prometheus_static_targets }}'
+  loop_control:
+    loop_var: sd
+  tags:
+    - job_file
+  when: prometheus_static_targets is defined
+
+- name: "set prometheus config yml"
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus_opt_config_file }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    validate: "promtool check-config %s"
+  tags:
+    - job_file

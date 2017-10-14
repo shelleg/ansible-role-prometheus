@@ -1,0 +1,21 @@
+[prometheus-rpm_release]
+name=prometheus-rpm_release
+baseurl=https://packagecloud.io/prometheus-rpm/release/el/{{ ansible_distribution_major_version }}/$basearch
+repo_gpgcheck=0
+gpgcheck=0
+enabled=1
+gpgkey=https://packagecloud.io/prometheus-rpm/release/gpgkey
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+metadata_expire=300
+
+[prometheus-rpm_release-source]
+name=prometheus-rpm_release-source
+baseurl=https://packagecloud.io/prometheus-rpm/release/el/{{ ansible_distribution_major_version }}/SRPMS
+repo_gpgcheck=0
+gpgcheck=0
+enabled=1
+gpgkey=https://packagecloud.io/prometheus-rpm/release/gpgkey
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+metadata_expire=300

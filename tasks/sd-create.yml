@@ -1,0 +1,29 @@
+---
+- name: "Touch sd file"
+  file:
+    dest: "{{ prometheus_file_sd_config_path }}/{{ sd_file.name }}.yml"
+    state: touch
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+      - '{{ sd }}'
+  loop_control:
+    loop_var: sd_file
+
+- name: "set prometheus sd yml file"
+  copy:
+    content: |
+            {% if sdfile.hosts is defined %}
+            - targets: {{ sdfile.hosts }}
+            {% endif %}
+            {% if sdfile.host is defined %}
+            - targets:
+              - "{{ sdfile.host }}:{{ sdfile.port }}"
+            {% endif %}
+    dest: "{{ prometheus_file_sd_config_path }}/{{ sdfile.name }}.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+    - '{{ sd }}'
+  loop_control:
+    loop_var: sdfile

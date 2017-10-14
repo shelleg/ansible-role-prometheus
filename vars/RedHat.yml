@@ -1,0 +1,8 @@
+---
+prometheus_requirements:
+  - pygpgme
+  - yum-utils
+  - epel-release
+
+prometheus_repo_key: 'https://packagecloud.io/prometheus-rpm/release/gpgkey'
+prometheus_systemd_dir: /usr/lib/systemd/system/

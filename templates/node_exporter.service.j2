@@ -1,0 +1,19 @@
+# -*- mode: conf -*-
+# /usr/lib/systemd/system/node_exporter.service is {{ ansible_managed }}
+
+[Unit]
+Description=Prometheus exporter for machine metrics, written in Go with pluggable metric collectors.
+Documentation=https://github.com/prometheus/node_exporter
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/node_exporter
+User=prometheus
+ExecStart=/usr/bin/node_exporter \
+          {%for flag in prometheus_node_exporter_opts %}{% if prometheus_node_exporter_version | version_compare('0.15', '<') %}-{% else %}--{% endif %}{{ flag }} \
+          {% endfor %}
+          $NODE_EXPORTER_OPTS
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

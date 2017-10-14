@@ -1,0 +1,57 @@
+---
+# handlers file for ansible-role-prometheus
+
+- name: restart prometheus
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: prometheus
+
+- name: reload prometheus
+  systemd:
+    state: reloaded
+    name: prometheus
+    daemon_reload: yes
+
+- name: stop prometheus
+  systemd:
+    state: stopped
+    name: prometheus
+    daemon_reload: yes
+
+
+- name: restart node_exporter
+  systemd:
+    name: node_exporter
+    state: restarted
+    daemon_reload: yes
+
+- name: reload node_exporter
+  systemd:
+    name: node_exporter
+    state: reloaded
+    daemon_reload: yes
+
+- name: stop node_exporter
+  systemd:
+    name: node_exporter
+    state: stopped
+    daemon_reload: yes
+
+- name: restart alertmanager
+  systemd:
+    name: alertmanager
+    state: restarted
+    daemon_reload: yes
+
+- name: reload alertmanager
+  systemd:
+    name: alertmanager
+    state: reloaded
+    daemon_reload: yes
+
+- name: stop alertmanager
+  systemd:
+    name: alertmanager
+    state: stopped
+    daemon_reload: yes

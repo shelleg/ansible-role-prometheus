@@ -1,0 +1,121 @@
+---
+# - name: "platform-suffix amd64"
+#   set_fact:
+#     prometheus_linux_suffix: "{{ ansible_system }}-amd64"
+#   when: ansible_userspace_bits == 64
+#
+# - name: "platform-suffix i386"
+#   set_fact:
+#     prometheus_linux_suffix: "{{ ansible_system }}-386"
+#   when: ansible_userspace_bits == 32
+
+- name: "Check prometheus version"
+  shell: "prometheus --version | grep {{ prometheus_version }}"
+  register: prometheus_vercheck
+  changed_when: false
+  ignore_errors: true
+
+- name: "Check alertmanager version"
+  command: alertmanager --version
+  register: alertmanager_vercheck
+  changed_when: false
+  ignore_errors: true
+
+- name: "Check node_exporter version"
+  command: node_exporter --version
+  register: node_exporter_vercheck
+  changed_when: false
+  ignore_errors: true
+
+- name: "Create Prometheus group"
+  group:
+    name: "{{ prometheus_group }}"
+    state: present
+
+- name: "Create Prometheus user"
+  user:
+    name: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    home: "{{ prometheus_home_dir }}"
+    shell: /sbin/nologin
+    state: present
+
+- name: "Create prometheus config directory"
+  file:
+    state: directory
+    dest: "{{ dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0750
+  with_items:
+    - "{{ prometheus_storage_local_path }}"
+    - "{{ prometheus_conf_dir }}"
+    - "{{ prometheus_install_path }}"
+  loop_control:
+    loop_var: dir
+
+- name: "Download and untar prometheus release - {{ prometheus_version }}"
+  unarchive:
+    src: "{{ prometheus_pkg_url }}"
+    dest: "{{ prometheus_install_path }}"
+    copy: no
+  when: '"prometheus" in prometheus_components and (prometheus_vercheck|failed)'
+
+- name: "Download and untar alertmanager release - {{ prometheus_alaertmanager_version }}"
+  unarchive:
+    src: "{{ prometheus_alaertmanager_pkg_url }}"
+    dest: "{{ prometheus_install_path }}"
+    copy: no
+  when: '"alertmanager" in prometheus_components and (alertmanager_vercheck|failed)'
+
+- name: "Download and untar node_exporter release - {{ prometheus_node_exporter_version }}"
+  unarchive:
+    src: "{{ prometheus_node_exporter_pkg_url }}"
+    dest: "{{ prometheus_install_path }}"
+    copy: no
+  when: '"node_exporter" in prometheus_components and (node_exporter_vercheck|failed)'
+
+- name: "Download and untar crate_adapter release - {{ prometheus_crate_adapter_version }}"
+  unarchive:
+    src: "{{ prometheus_crate_adapter_pkg_url }}"
+    dest: "{{ prometheus_install_path }}"
+    copy: no
+  when: '"crate_adapter" in prometheus_components'
+
+- name: "Create links for promehtus binary"
+  file:
+    state: link
+    dest: /usr/bin/{{ binary }}
+    src: "{{ prometheus_install_path }}/prometheus-{{ prometheus_version }}.{{ prometheus_linux_suffix }}/{{ binary }}"
+  with_items:
+    - prometheus
+    - promtool
+  loop_control:
+    loop_var: binary
+  when: "'prometheus' in prometheus_components"
+
+- name: "Create links for alertmanager binary"
+  file:
+    state: link
+    dest: /usr/bin/{{ binary }}
+    src: "{{ prometheus_install_path }}/alertmanager-{{ prometheus_alaertmanager_version }}.{{ prometheus_linux_suffix }}/{{ binary }}"
+  with_items:
+    - alertmanager
+    - amtool
+  loop_control:
+    loop_var: binary
+  when: "'prometheus' in prometheus_components"
+
+- name: "Create links for node_exporter binary"
+  file:
+    state: link
+    dest: /usr/bin/node_exporter
+    src: "{{ prometheus_install_path }}/node_exporter-{{ prometheus_node_exporter_version }}.{{ prometheus_linux_suffix }}/node_exporter"
+  when: "'node_exporter' in prometheus_components"
+
+- name: "Create links for node_exporter binary"
+  file:
+    state: link
+    dest: /usr/bin/crate_adapter
+    src: "{{ prometheus_install_path }}/crate_adapter"
+  when: "'crate_adapter' in prometheus_components"

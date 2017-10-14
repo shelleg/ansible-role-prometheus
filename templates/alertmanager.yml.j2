@@ -1,0 +1,23 @@
+global:
+  # ResolveTimeout is the time after which an alert is declared resolved
+  # if it has not been updated.
+  resolve_timeout: {{ alertmanager_resolve_timeout }}
+
+{% if alertmanager_slack_api_url != '' %}
+  # The API URL to use for Slack notifications.
+  slack_api_url: {{ alertmanager_slack_api_url }}
+
+{% endif %}
+{% if alertmanager_pagerduty_url != '' %}
+  # The API URL to use for pagerduty notifications.
+  pagerduty_url: {{ alertmanager_pagerduty_url }}
+
+{% endif %}
+{% if alertmanager_opsgenie_api_host != '' %}
+  # The API URL to use for opsgenie notifications.
+  opsgenie_api_host: {{ alertmanager_opsgenie_api_host }}
+
+{% endif %}
+
+templates:
+  - '{{ alertmanager_templates_path }}/*.tmpl'

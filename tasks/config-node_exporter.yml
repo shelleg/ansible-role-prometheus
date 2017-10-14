@@ -1,0 +1,5 @@
+---
+- name: "set node_exporter service"
+  template:
+    src: node_exporter.service.j2
+    dest: "{{ prometheus_systemd_dir }}/node_exporter.service"

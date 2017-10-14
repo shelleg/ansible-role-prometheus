@@ -1,0 +1,25 @@
+---
+- name: "Install yum/prometheus requirements"
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - "{{ prometheus_requirements }}"
+
+- name: "Enable Yum repository"
+  template:
+    src: prometheus-rpm_release.repo.j2
+    dest: /etc/yum.repos.d/prometheus-rpm_release.repo
+    mode: 0755
+
+- name: Import RPM key
+  rpm_key:
+    key: "{{ prometheus_repo_key }}"
+    state: present
+
+- name: Install prometheus_components
+  yum:
+    name: "{{ item }}"
+    update_cache: true
+  with_items:
+    - "{{ prometheus_components }}"

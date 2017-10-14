@@ -1,0 +1,61 @@
+---
+# tasks file for ansible-role-prometheus
+
+- name: "Include {{ ansible_os_family }} vars"
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: "Include {{ ansible_os_family }} tasks"
+  include: "install-{{ ansible_os_family }}-{{ prometheus_installation_method }}.yml"
+  when: prometheus_installation_method == 'pkg'
+
+- name: "Include {{ prometheus_installation_method }} tasks"
+  include: "install-{{ prometheus_installation_method }}.yml"
+  when: prometheus_installation_method == 'github-release'
+
+- name: "Configure prometheus components"
+  include: "config-{{ item }}.yml"
+  notify: "restart {{ item }}"
+  when: not prometheus_skip_config
+  with_items:
+    - "{{ prometheus_components }}"
+  tags:
+    - prom-config
+
+- name: "Enable / Start prometheus components"
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+    name: "{{ item }}"
+  with_items:
+    - "{{ prometheus_components }}"
+  tags:
+    - config
+
+- name: "wait until prometheus service is up - tcp"
+  wait_for:
+    host: "{{ prometheus_opt_listen_ip }}"
+    port: "{{ prometheus_opt_port }}"
+    delay: 10
+  when: "'prometheus' in prometheus_components"
+
+- name: "wait until alertmanager service is up - tcp"
+  wait_for:
+    host: "{{ prometheus_alertmanager_opt_listen_ip }}"
+    port: "{{ prometheus_alertmanager_opt_port }}"
+    delay: 10
+  when: "'alertmanager' in prometheus_components"
+
+- name: "wait until node_exporter service is up - tcp"
+  wait_for:
+    host: "{{ prometheus_node_exporter_opt_listen_ip }}"
+    port: "{{ prometheus_node_exporter_opt_port }}"
+    delay: 10
+  when: "'node_exporter' in prometheus_components"
+
+- name: "wait until crate_adapter service is up - tcp"
+  wait_for:
+    host: "{{ prometheus_crate_adapter_opt_listen_ip }}"
+    port: "{{ prometheus_crate_adapter_opt_port }}"
+    delay: 10
+  when: "'crate_adapter' in prometheus_components"

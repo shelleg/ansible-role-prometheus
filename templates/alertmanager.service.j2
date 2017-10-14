@@ -1,0 +1,21 @@
+# -*- mode: conf -*-
+# /usr/lib/systemd/system/alertmanager.service is {{ ansible_managed }}
+[Unit]
+Description=Prometheus Alertmanager.
+Documentation=https://github.com/prometheus/alertmanager
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/alertmanager
+User=prometheus
+ExecStart=/usr/bin/alertmanager \
+          -config.file={{ prometheus_alertmanager_conf_file }} \
+          -storage.path={{ prometheus_alertmanager_storage_path }} \
+          {%for flag in prometheus_alertmanager_opts %}-{{ flag }} \
+          {% endfor %}
+          $ALERTMANAGER_OPTS
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

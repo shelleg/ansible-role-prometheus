@@ -1,0 +1,23 @@
+# -*- mode: conf -*-
+# /usr/lib/systemd/system/prometheus.service is {{ ansible_managed }}
+[Unit]
+Description=The Prometheus monitoring system and time series database.
+Documentation=https://prometheus.io
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/prometheus
+User=prometheus
+ExecStart=/usr/bin/prometheus \
+          -config.file={{ prometheus_opt_config_file }} \
+          -storage.local.path={{ prometheus_storage_local_path }} \
+          -web.console.libraries=/usr/share/prometheus/console_libraries \
+          -web.console.templates=/usr/share/prometheus/consoles \
+          {%for flag in prometheus_opts %}-{{ flag }} \
+          {% endfor %}
+          $PROMETHEUS_OPTS
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

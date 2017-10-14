@@ -1,0 +1,54 @@
+global:
+  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 15s # By default, scrape targets every 15 seconds.
+  # scrape_timeout is set to the global default (10s).
+
+  # The labels to add to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    monitor: 'master'
+
+
+{% if promehtues_use_role_rules %}
+  {% if prometheus_rule_files is defined %}
+# Rule files specifies a list of files from which rules are read.
+rule_files:
+  {% for (key, value) in prometheus_rule_files.items() %}
+  - {{ prometheus_rules_dir }}/{{ value.dest }}
+  {% endfor %}
+  {% endif %}
+{% endif %}
+
+
+# A list of scrape configurations.
+scrape_configs:
+
+  - job_name: 'prometheus'
+    scrape_interval: 10s
+    scrape_timeout:  10s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node'
+{% if prometheus_static_targets is defined %}
+    file_sd_configs:
+      - files:
+#        - '{{ prometheus_file_sd_config_path }}/*.json'
+        - '{{ prometheus_file_sd_config_path }}/*.yml'
+#        - '{{ prometheus_file_sd_config_path }}/*.yaml'
+{%endif %}
+{% if "node_exporter" in prometheus_components %}
+    static_configs:
+      - targets: ['{{ prometheus_node_exporter_opt_listen_ip }}:{{ prometheus_node_exporter_opt_port }}']
+{% endif %}
+
+{% if "crate_adapter" in prometheus_components %}
+{% if prometheus_cratedb_remote_write %}
+remote_write:
+   - url: http://{{ prometheus_crate_adapter_opt_listen_ip }}:{{ prometheus_crate_adapter_opt_port }}/write
+{% endif %}
+{% if prometheus_cratedb_remote_read %}
+remote_read:
+   - url: http://{{ prometheus_crate_adapter_opt_listen_ip }}:{{ prometheus_crate_adapter_opt_port }}/read
+{% endif %}
+{% endif %}

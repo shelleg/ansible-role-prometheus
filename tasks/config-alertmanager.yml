@@ -1,0 +1,15 @@
+---
+- name: "set alertmanager service"
+  template:
+    src: alertmanager.service.j2
+    dest: "{{ prometheus_systemd_dir }}/alertmanager.service"
+
+- name: "Use alertmanager sample configuration"
+  copy:
+    remote_src: true
+    src: "{{ prometheus_install_path }}/alertmanager-{{ prometheus_alaertmanager_version }}.{{ prometheus_linux_suffix }}/simple.yml"
+    dest: "{{ prometheus_alertmanager_conf_file }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    validate: "amtool check-config %s"
+  when: prometheus_installation_method == 'github-release' and not prometheus_alertmanager_custom_config
