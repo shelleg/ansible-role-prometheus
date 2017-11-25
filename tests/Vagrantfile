@@ -23,30 +23,30 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Iterate through entries in YAML file
   servers.each do |servers|
 
-  	if servers["username"]
-			config.ssh.username = servers["username"]
-		end
+    if servers["username"]
+      config.ssh.username = servers["username"]
+    end
 
-  	if servers["password"]
-			config.ssh.password = servers["password"]
-			config.ssh.insert_key = false
-		end
+    if servers["password"]
+      config.ssh.password = servers["password"]
+      config.ssh.insert_key = false
+    end
 
     config.vm.define servers["name"] do |srv|
 
-    	if servers["box_url"] != nil
-    		srv.vm.box_url = servers["box_url"]
-    	else
-    	  if servers["box_version"] and
-      	    srv.vm.box_version = servers["box_version"]
-      	    srv.vm.box_check_update = false
-          end
-    	end
-    		srv.vm.box = servers["box"]
+      if servers["box_url"] != nil
+        srv.vm.box_url = servers["box_url"]
+      else
+        if servers["box_version"] and
+            srv.vm.box_version = "=#{servers["box_version"]}"
+          srv.vm.box_check_update = false
+        end
+      end
+      srv.vm.box = servers["box"]
 
       if servers["ip"]
-      	srv.vm.network "private_network", ip: servers["ip"]
-	    end
+        srv.vm.network "private_network", ip: servers["ip"]
+      end
 
       if servers["ssh_host_port"]
         # https://realguess.net/2015/10/06/overriding-the-default-forwarded-ssh-port-in-vagrant/
@@ -70,41 +70,41 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       end
 
       if servers["provider"] != nil
-      	case servers["provider"]
-      	when "virtualbox"
-					srv.vm.provider :virtualbox do |vb|
-						vb.name = "#{servers["name"]}"
-						vb.memory = "#{servers["ram"]}"
-						#vb.gui = "#{servers["gui"]}"
-					end
-				else
-					puts "Supported provide ATM is Virtualbox ... exiting"
-				end
+        case servers["provider"]
+        when "virtualbox"
+          srv.vm.provider :virtualbox do |vb|
+            vb.name = "#{servers["name"]}"
+            vb.memory = "#{servers["ram"]}"
+            #vb.gui = "#{servers["gui"]}"
+          end
+        else
+          puts "Supported provide ATM is Virtualbox ... exiting"
+        end
       end
       srv.vm.provision :ansible do |ansible|
-           ansible.limit = servers[:name]
+        ansible.limit = servers[:name]
         if servers["playbook"] == nil
-           ansible.playbook = "./test.yml"
+          ansible.playbook = "./test.yml"
         else
-           ansible.playbook = "./#{servers["playbook"]}"
+          ansible.playbook = "./#{servers["playbook"]}"
         end
         if servers["inventory"] != nil
-           ansible.inventory_path = servers["inventory"]
+          ansible.inventory_path = servers["inventory"]
         end
-            ansible.sudo = "true"
-            ansible.sudo_user = "root"
-            ansible.host_key_checking = "false"
-            ansible.verbose = "-v"
+        ansible.sudo = "true"
+        ansible.sudo_user = "root"
+        ansible.host_key_checking = "false"
+        ansible.verbose = "-v"
 
-            ansible.galaxy_roles_path = "./site-roles/"
-            ansible.galaxy_role_file = "./requirements.yml"
-            ansible.extra_vars = {
-              some_var: "some_value",
-              dict: {
-                kay1: "val1",
-                kay2: "val2"
-              }
-            }
+        ansible.galaxy_roles_path = "./site-roles/"
+        ansible.galaxy_role_file = "./requirements.yml"
+        ansible.extra_vars = {
+          some_var: "some_value",
+          dict: {
+            kay1: "val1",
+            kay2: "val2"
+          }
+        }
       end
     end
   end
