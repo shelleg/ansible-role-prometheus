@@ -1,3 +1,4 @@
 tests/.vagrant/
 tests/site-roles/
 .idea
+.DS_Store

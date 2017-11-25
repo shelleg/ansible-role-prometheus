@@ -53,6 +53,13 @@
     delay: 10
   when: "'node_exporter' in prometheus_components"
 
+- name: "wait until pushgateway service is up - tcp"
+  wait_for:
+    host: "{{ prometheus_pushgateway_opt_listen_ip }}"
+    port: "{{ prometheus_pushgateway_opt_port }}"
+    delay: 10
+  when: "'pushgateway' in prometheus_components"
+
 - name: "wait until crate_adapter service is up - tcp"
   wait_for:
     host: "{{ prometheus_crate_adapter_opt_listen_ip }}"

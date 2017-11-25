@@ -1,0 +1,5 @@
+---
+- name: "set pushgateway service"
+  template:
+    src: pushgateway.service.j2
+    dest: "{{ prometheus_systemd_dir }}/pushgateway.service"

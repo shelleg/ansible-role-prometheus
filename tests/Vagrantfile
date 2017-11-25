@@ -54,7 +54,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       end
 
       # issue with symlinks ...
-      srv.vm.synced_folder '.', '/vagrant', disabled: true
+      # srv.vm.synced_folder '.', '/vagrant', disabled: true
 
       if Vagrant.has_plugin?("vagrant-protect")
         srv.protect.enabled = servers["protected"]

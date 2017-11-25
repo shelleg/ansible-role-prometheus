@@ -5,10 +5,11 @@ This started of as a simple Proof Of Concept which should install [Prometheus](h
 This rolw basically mimics the rpm/apt installations with systemd files.
 
 Out Of The Box -> It will install the following prometheus_components:
-  - [prometheus](http://prometheus.io) version `1.8.0`
-  - [alertmanager](https://prometheus.io/docs/alerting/alertmanager/) version `0.9.1`
-  - [node_exporter](https://github.com/prometheus/node_exporter) version `0.15.0`
-
+  - [prometheus](http://prometheus.io) version `2.0.0`
+  - [alertmanager](https://prometheus.io/docs/alerting/alertmanager/) version `0.11.0`
+  - [node_exporter](https://github.com/prometheus/node_exporter) version `0.15.1`
+  - [pushgateway](https://github.com/prometheus/pushgateway) version `0.4.0`
+    [Impotant notes on pushing over pulling](https://prometheus.io/docs/practices/pushing/)  
   [ still with no official release using ]
   - [create_adapter](https://github.com/crate/crate_adapter) version `0.1-2017100611-d24e213`
 
@@ -19,6 +20,7 @@ Final-result with defaults:
 * Prometheus listening on default port of 9090 `http://localhost:9090`
 * Node exporter listening on default port of 9100 `http://localhost:9100/metrics`
 * Alertmanager listening on default port of 9093 `http://localhost:9093`
+* Pushgateway listening on default port of 9091 `http://localhost:9091`
 
 Role Variables
 --------------
@@ -38,12 +40,12 @@ A few Prometheus tweaks out of the box:
 
 
 
-* `prometheus_skip_config: false` - if you want to install without configuration / stay with the default apt/rpm (or simlar style via github) config - set this to `true`
+* `prometheus_skip_config: false` - if you want to install without configuration / stay with the default apt/rpm (or similar style via github) config - set this to `true`
 * `promehtues_use_role_rules: false` - there some sample_alerts I scattered and found useful to build upon so feel free to reuse [ BTW this option will not work without prometheus_skip_config `true` ]
 
 In general any command-line argument you wish to pass to `prometheus`, `node_exporter` & `alertmanager` cloud be done by setting / adding one of the `prometheus_components`_opts:
 
-As an exmple with alertmanager:
+As an example with alertmanager:
 
     prometheus_alertmanager_opts:
       - "web.listen-address={{ prometheus_alertmanager_opt_web_listen_address }}"

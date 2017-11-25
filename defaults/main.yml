@@ -13,16 +13,20 @@ prometheus_linux_arch: '{{ "amd64" if (ansible_userspace_bits == "64" ) else "38
 prometheus_linux_suffix: '{{ ansible_system | lower }}-{{ prometheus_linux_arch }}'
 prometheus_install_path: '/opt/prometheus'
 # https://github.com/prometheus/prometheus/releases/download/v1.8.0/prometheus-1.8.0.{{ prometheus_linux_suffix }}.tar.gz
-prometheus_version: 1.8.0
+prometheus_version: 2.0.0
 prometheus_pkg_url: https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.{{ prometheus_linux_suffix }}.tar.gz
 
 # https://github.com/prometheus/node_exporter/releases/download/v0.15.0/node_exporter-0.15.0.{{ prometheus_linux_suffix }}.tar.gz
-prometheus_node_exporter_version: 0.15.0
+prometheus_node_exporter_version: 0.15.1
 prometheus_node_exporter_pkg_url: https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_node_exporter_version }}/node_exporter-{{ prometheus_node_exporter_version }}.{{ prometheus_linux_suffix }}.tar.gz
 
 # https://github.com/prometheus/alertmanager/releases/download/v0.9.1/alertmanager-0.9.1.{{ prometheus_linux_suffix }}.tar.gz
-prometheus_alaertmanager_version: 0.9.1
-prometheus_alaertmanager_pkg_url: https://github.com/prometheus/alertmanager/releases/download/v{{ prometheus_alaertmanager_version }}/alertmanager-{{ prometheus_alaertmanager_version }}.{{ prometheus_linux_suffix }}.tar.gz
+prometheus_alertmanager_version: 0.11.0
+prometheus_alertmanager_pkg_url: https://github.com/prometheus/alertmanager/releases/download/v{{ prometheus_alertmanager_version }}/alertmanager-{{ prometheus_alertmanager_version }}.{{ prometheus_linux_suffix }}.tar.gz
+
+# https://github.com/prometheus/pushgateway/releases/download/v0.4.0/pushgateway-0.4.0.linux-amd64.tar.gz
+prometheus_pushgateway_version: 0.4.0
+prometheus_pushgateway_pkg_url: https://github.com/prometheus/pushgateway/releases/download/v{{ prometheus_pushgateway_version }}/pushgateway-{{ prometheus_pushgateway_version }}.{{ prometheus_linux_suffix }}.tar.gz
 
 # https://cdn.crate.io/downloads/dist/prometheus/crate_adapter-0.1-2017100611-d24e213.linux.amd64.tar.gz
 prometheus_crate_adapter_version: 0.1-2017100611-d24e213
@@ -33,6 +37,7 @@ prometheus_components:
   - alertmanager
   - node_exporter
   - prometheus
+#  - pushgateway
 
 prometheus_user: prometheus
 prometheus_group: prometheus
@@ -42,13 +47,14 @@ prometheus_conf_dir: /etc/prometheus
 prometheus_home_dir: /var/lib/prometheus
 
 prometheus_rules_dir: "{{ prometheus_conf_dir }}/alerts"
-prometheus_rule_files:
-  sample_alerts:
-    src:  sample_alert.rules
-    dest: sample_alert.rules
+#prometheus_rule_files:
+#  sample_alerts:
+#    src:  '{{ "sample_alert.rules.yml" if (prometheus_version | version_compare("2.0.0", "=>")) else "sample_alert.rules" }}'
+#    dest: '{{ "sample_alert.rules.yml" if (prometheus_version | version_compare("2.0.0", "=>")) else "sample_alert.rules" }}'
   # docker_alerts:
   #   src: docker_alerts.rules
   #   dest: docker_alerts.rules
+
 prometheus_storage_local_path: /var/lib/prometheus/data
 prometheus_opt_port: 9090
 
@@ -67,12 +73,12 @@ prometheus_opt_storage_local_dirty: false
 prometheus_opt_storage_local_target_heap_size: '3221225472'
 prometheus_opt_storage_local_retention: "720h" # 1month
 
-prometheus_opts:
+prometheus_pre2_opts:
   - "web.listen-address={{ prometheus_opt_web_listen_address }}"
   - "log.level={{ prometheus_opt_log_level }}"
+  - "log.format={{ prometheus_opt_log_format }}"
   - "alertmanager.url={{ prometheus_opt_alertmanager_url }}"
   # will append to /var/log/messages or syslog
-  - "log.format={{ prometheus_opt_log_format }}"
   - "web.external-url=http://{{ ansible_all_ipv4_addresses[0] }}:{{ prometheus_opt_port }}"
   # used in times where promdb crashed
   - "storage.local.dirty={{ prometheus_opt_storage_local_dirty }}"
@@ -80,6 +86,21 @@ prometheus_opts:
   # DEPRECATED - "storage.local.max-chunks-to-persist={{ prometheus_opt_storage_local_max_chunks_to_persist }}"
   - "storage.local.target-heap-size={{ prometheus_opt_storage_local_target_heap_size }}"
   - "storage.local.retention={{ prometheus_opt_storage_local_retention }}"
+
+prometheus_opts:
+  - "web.listen-address={{ prometheus_opt_web_listen_address }}"
+  - "log.level={{ prometheus_opt_log_level }}"
+#  - "log.format={{ prometheus_opt_log_format }}"
+#  - "alertmanager.url={{ prometheus_opt_alertmanager_url }}"
+  # will append to /var/log/messages or syslog
+  - "web.external-url=http://{{ ansible_all_ipv4_addresses[0] }}:{{ prometheus_opt_port }}"
+  # used in times where promdb crashed
+#  - "storage.local.dirty={{ prometheus_opt_storage_local_dirty }}"
+  # DEPRECATED - "storage.local.memory-chunks={{ prometheus_opt_storage_local_memory_chunks }}"
+  # DEPRECATED - "storage.local.max-chunks-to-persist={{ prometheus_opt_storage_local_max_chunks_to_persist }}"
+#  - "storage.local.target-heap-size={{ prometheus_opt_storage_local_target_heap_size }}"
+#  - "storage.local.retention={{ prometheus_opt_storage_local_retention }}"
+
 
 # prometheus_rule_files:
 prometheus_file_sd_config_path: "{{ prometheus_conf_dir }}/jobs"
@@ -101,10 +122,32 @@ prometheus_alertmanager_conf_file: /etc/prometheus/alertmanager.yml
 prometheus_alertmanager_opt_port: 9093
 prometheus_alertmanager_opt_listen_ip: '0.0.0.0'
 prometheus_alertmanager_opt_web_listen_address: '{{ prometheus_alertmanager_opt_listen_ip }}:{{ prometheus_alertmanager_opt_port }}'
-prometheus_alertmanager_opt_log_format: 'logger:syslog?appname=alertmanager&local=7'
+#prometheus_alertmanager_opt_log_format: '{{ "logger:syslog?appname=alertmanager&local=7" if (prometheus_version | version_compare("2.0.0", "=>")) else " " }}'
+
+prometheus_alertmanager_pre2_opts:
+  - "web.listen-address={{ prometheus_alertmanager_opt_web_listen_address }}"
+  - "log.format={{ prometheus_alertmanager_opt_log_format | default(omit) }}"
+
 prometheus_alertmanager_opts:
   - "web.listen-address={{ prometheus_alertmanager_opt_web_listen_address }}"
-  - "log.format={{ prometheus_alertmanager_opt_log_format }}"
+# alertmanager config options
+# prometheus_alertmanager_resolve_timeout
+
+
+# Push gateway
+prometheus_pushgateway_persistence_file: /var/lib/prometheus/pushgatway-data-file
+prometheus_pushgateway_persistence_interval: "5m"
+prometheus_pushgateway_conf_file: /etc/prometheus/alertmanager.yml
+prometheus_pushgateway_opt_port: 9091
+prometheus_pushgateway_web_telemetry_path: '/metrics'
+prometheus_pushgateway_opt_listen_ip: '0.0.0.0'
+prometheus_pushgateway_opt_web_listen_address: '{{ prometheus_pushgateway_opt_listen_ip }}:{{ prometheus_pushgateway_opt_port }}'
+prometheus_pushgateway_opt_log_format: 'logger:syslog?appname=pushgateway&local=7'
+prometheus_pushgateway_opt_log_level:
+prometheus_pushgateway_opts:
+  - "web.listen-address={{ prometheus_pushgateway_opt_web_listen_address }}"
+  - "log.format={{ prometheus_pushgateway_opt_log_format }}"
+  - "log.level={{ prometheus_pushgateway_opt_log_level }}"
 
 # crate_adapter
 prometheus_crate_adapter_defaults_file: /etc/default/crate_adapter

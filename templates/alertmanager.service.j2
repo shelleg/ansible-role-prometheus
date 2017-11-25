@@ -11,8 +11,13 @@ User=prometheus
 ExecStart=/usr/bin/alertmanager \
           -config.file={{ prometheus_alertmanager_conf_file }} \
           -storage.path={{ prometheus_alertmanager_storage_path }} \
+          {% if prometheus_version | version_compare('1.8.1', '<=') %}
+          {%for flag in prometheus_alertmanager_pre2_opts %}-{{ flag }} \
+          {% endfor %}
+          {% else %}
           {%for flag in prometheus_alertmanager_opts %}-{{ flag }} \
           {% endfor %}
+          {% endif %}
           $ALERTMANAGER_OPTS
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure

@@ -1,4 +1,30 @@
 ---
+
+- name: "Set promtool flags based on version"
+  block:
+  - set_fact:
+      promtool_check_config_cmd: 'promtool check-config'
+
+  - set_fact:
+      promtool_check_rules_cmd: 'promtool check-rules'
+  when: prometheus_version |  version_compare('1.8.1', operator='<=')
+  tags:
+    - doit
+
+- block:
+  - set_fact:
+      promtool_check_config_cmd: 'promtool check config'
+
+  - set_fact:
+      promtool_check_rules_cmd: 'promtool check rules'
+  when: prometheus_version |  version_compare('1.8.1', operator='>')
+  tags:
+    - doit
+
+- debug: var=promtool_check_config_cmd
+  tags:
+    - doit
+
 - name: "crate additional directories"
   file:
     path: "{{ dirname }}"
@@ -19,17 +45,37 @@
   notify:
     - reload prometheus
 
-- name: "Copy rule files from playbook's, if any"
-  copy:
-    src: "{{ rule.value.src }}"
-    dest: "{{ prometheus_rules_dir }}/{{ rule.value.dest }}"
-    validate: "promtool check-rules %s"
-  with_dict: '{{ prometheus_rule_files }}'
-  notify:
-    - reload prometheus
+- block:
+
+    - name: "Set prometheus_rule_files [=>2.0.0]"
+      set_fact:
+        prometheus_rule_files:
+          sample_alerts:
+            src:  sample_alert.rules.yml
+            dest: sample_alert.rules.yml
+      when: prometheus_version |  version_compare('2.0.0', operator='>=')
+
+    - name: "Set prometheus_rule_files [=<1.8.1]"
+      set_fact:
+        prometheus_rule_files:
+          sample_alerts:
+            src:  sample_alert.rules
+            dest: sample_alert.rules
+      when: prometheus_version |  version_compare('1.8.1', operator='<=')
+
+    - name: "Copy rule files from playbook's, if any"
+      copy:
+        src: "{{ rule.value.src }}"
+        dest: "{{ prometheus_rules_dir }}/{{ rule.value.dest }}"
+        validate: "{{ promtool_check_rules_cmd }} %s"
+      with_dict: '{{ prometheus_rule_files }}'
+      notify:
+        - reload prometheus
+      loop_control:
+          loop_var: rule
+
   when: promehtues_use_role_rules
-  loop_control:
-      loop_var: rule
+
 
 - name: "Create sd_files"
   include: sd-create.yml
@@ -48,6 +94,6 @@
     dest: "{{ prometheus_opt_config_file }}"
     owner: "{{ prometheus_user }}"
     group: "{{ prometheus_group }}"
-    validate: "promtool check-config %s"
+    validate: "{{ promtool_check_config_cmd }} %s"
   tags:
     - job_file

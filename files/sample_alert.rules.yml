@@ -1,0 +1,143 @@
+groups:
+- name: /vagrant/site-roles/shelleg.prometheus/files/sample_alert.rules
+  rules:
+  - alert: HighErrorRate
+    expr: sum(rate(http_requests_total{status=~"5.."}[5m])) BY (job, path) / sum(rate(http_requests_total[5m]))
+      BY (job, path) * 100 > 1
+    for: 10m
+    annotations:
+      description: '{{$labels.job}} has {{$value}}% 5xx errors on {{$labels.path}}'
+      summary: high number of 5xx errors
+  - alert: DailyTest
+    expr: vector(1) > 0
+    for: 1m
+    annotations:
+      description: daily alert test
+      summary: daily alert test
+  - alert: service_down
+    expr: up == 0
+    labels:
+      severity: major
+      value: '{{$value}}'
+  - alert: service_up
+    expr: up == 1
+    labels:
+      severity: ok
+      value: '{{$value}}'
+  - alert: high_load
+    expr: node_load1 > 0.5
+    annotations:
+      description: '{{ $labels.instance }} of job {{ $labels.job }} is under high
+        load.'
+      summary: Instance {{ $labels.instance }} under high load
+  - alert: ApiRequestsHigh
+    expr: alerta_alerts_total > 1
+    labels:
+      service: Alerta
+      severity: major
+      value: '{{$value}} req/s'
+    annotations:
+      description: API request rate of {{$value}} req/s is high (threshold 3 req/s)
+      runbook: http://wiki/runbook
+      summary: API request rate high
+  - alert: Test
+    expr: alerta_alerts_total > 0
+    labels:
+      service: Alerta
+      severity: warning
+      value: '{{$value}}'
+    annotations:
+      description: API request rate of {{$value}} req/s is high (threshold 3 req/s)
+      runbook: http://
+      summary: API request rate high
+  - alert: CompleteAlert
+    expr: alerta_alerts_total > 0
+    labels:
+      service: Web
+      severity: minor
+      value: '{{$value}}'
+    annotations:
+      description: complete alert triggered at {{$value}}
+      summary: alert triggered
+  - alert: high_cpu_usage_on_node
+    expr: sum(rate(process_cpu_seconds_total[5m])) BY (instance) * 100 > 70
+    for: 5m
+    annotations:
+      description: '{{ $labels.instance }} is using a LOT of CPU. CPU usage is {{
+        humanize $value}}%.'
+      summary: HIGH CPU USAGE WARNING ON '{{ $labels.instance }}'
+  - alert: high_memory_usage_on_node
+    expr: ((node_memory_MemTotal - node_memory_MemAvailable) / node_memory_MemTotal)
+      * 100 > 80
+    for: 5m
+    annotations:
+      description: '{{ $labels.instance }} is using a LOT of MEMORY. MEMORY usage
+        is over {{ humanize $value}}%.'
+      summary: HIGH MEMORY USAGE WARNING TASK ON '{{ $labels.host }}'
+  - alert: high_la_usage_on_node
+    expr: node_load5 > 5
+    for: 5m
+    annotations:
+      description: '{{ $labels.instance }} has a high load average. Load Average 5m
+        is {{ humanize $value}}.'
+      summary: HIGH LOAD AVERAGE WARNING ON '{{ $labels.instance }}'
+  - alert: monitoring_service_down
+    expr: up == 0
+    for: 5m
+    annotations:
+      description: The monitoring service '{{ $labels.job }}' is down.
+      summary: 'MONITORING SERVICE DOWN WARNING: NODE ''{{ $labels.host }}'''
+  - alert: node_running_out_of_disk_space
+    expr: (node_filesystem_size{mountpoint="/"} - node_filesystem_free{mountpoint="/"})
+      * 100 / node_filesystem_size{mountpoint="/"} > 80
+    for: 5m
+    annotations:
+      description: More than 80% of disk used. Disk usage {{ humanize $value }}%.
+      summary: 'LOW DISK SPACE WARING: NODE ''{{ $labels.host }}'''
+  - alert: disk_will_fill_in_8_hours
+    expr: predict_linear(node_filesystem_free{mountpoint="/"}[1h], 8 * 3600) < 0
+    for: 5m
+    annotations:
+      description: '{{ $labels.instance }} is writing a lot.'
+      summary: 'DISK SPACE FULL IN 8 HOURS: NODE ''{{ $labels.host }}'''
+  - alert: high_cpu_usage_on_container
+    expr: sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_swarm_task_name=~".+"}[5m]))
+      BY (container_label_com_docker_swarm_task_name, instance) * 100 > 200
+    for: 5m
+    annotations:
+      description: '{{ $labels.container_label_com_docker_swarm_task_name }} is using
+        a LOT of CPU. CPU usage is {{ humanize $value}}%.'
+      summary: 'HIGH CPU USAGE WARNING: TASK ''{{ $labels.container_label_com_docker_swarm_task_name
+        }}'' on ''{{ $labels.instance }}'''
+  - alert: container_eating_memory
+    expr: sum(container_memory_rss{container_label_com_docker_swarm_task_name=~".+"})
+      BY (instance, name) > 2.5e+09
+    for: 5m
+    annotations:
+      description: '{{ $labels.container_label_com_docker_swarm_task_name }} is eating
+        up a LOT of memory. Memory consumption of {{ $labels.container_label_com_docker_swarm_task_name
+        }} is at {{ humanize $value}}.'
+      summary: 'HIGH MEMORY USAGE WARNING: TASK ''{{ $labels.container_label_com_docker_swarm_task_name
+        }}'' on ''{{ $labels.instance }}'''
+  - alert: site_down
+    expr: probe_success == 0
+    for: 5m
+    annotations:
+      description: '{{$labels.instance}} has been down for more than 10 minutes.'
+      summary: '{{$labels.instance}} down'
+  - alert: container_missing_in_piwik_stack
+    expr: count(container_last_seen{container_label_com_docker_stack_namespace="piwik"})
+      < 3
+    for: 5m
+    annotations:
+      description: There are less than three container in the Piwik stack
+      summary: A container is missing in Piwik stack
+  - alert: container_not_in_running_state
+    expr: sum(container_tasks_state{state!="running"}) BY (container_label_com_docker_stack_namespace)
+      > 0
+    for: 1m
+    annotations:
+      description: '{{ $labels.container_label_com_docker_swarm_task_name }} has a
+        container not in running state on {{ $labels.instance }}'
+      summary: Container not in running state in stack '{{ $labels.container_label_com_docker_swarm_task_name
+        }}' on '{{ $labels.instance }}'

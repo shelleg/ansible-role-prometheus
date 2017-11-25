@@ -1,0 +1,22 @@
+# -*- mode: conf -*-
+# /usr/lib/systemd/system/prometheus.service is {{ ansible_managed }}
+[Unit]
+Description=The Prometheus monitoring system and time series database.
+Documentation=https://prometheus.io
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/pushgateway
+User=prometheus
+ExecStart=/usr/bin/pushgateway \
+          -persistence.file={{ prometheus_pushgateway_persistence_file }} \
+          -persistence.interval={{ prometheus_pushgateway_persistence_interval  }} \
+          -web.telemetry-path={{ prometheus_pushgateway_web_telemetry_path | d('"/metrics"') }}
+          {% for flag in prometheus_pushgateway_opts %}-{{ flag }} \
+          {% endfor %}
+          $PUSHGATEWAY_OPTS
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

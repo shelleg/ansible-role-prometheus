@@ -7,7 +7,7 @@
 - name: "Use alertmanager sample configuration"
   copy:
     remote_src: true
-    src: "{{ prometheus_install_path }}/alertmanager-{{ prometheus_alaertmanager_version }}.{{ prometheus_linux_suffix }}/simple.yml"
+    src: "{{ prometheus_install_path }}/alertmanager-{{ prometheus_alertmanager_version }}.{{ prometheus_linux_suffix }}/simple.yml"
     dest: "{{ prometheus_alertmanager_conf_file }}"
     owner: "{{ prometheus_user }}"
     group: "{{ prometheus_group }}"

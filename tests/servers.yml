@@ -7,17 +7,17 @@
 - name: centos
   box: centos/7
   box_version: 1708.01
-  ram: 1024
+  ram: 3096
   ip: 172.16.1.121
   ssh_host_port: 2230
   provider: virtualbox
   protected: false
 
-- name: ubuntu
-  box: bento/ubuntu-16.04
-  box_version: '2.2.7'
-  ram: 1024
-  ip: 172.16.1.122
-  ssh_host_port: 2234
-  provider: virtualbox
-  protected: false
+#- name: ubuntu
+#  box: bento/ubuntu-16.04
+#  box_version: '2.2.7'
+#  ram: 1024
+#  ip: 172.16.1.122
+#  ssh_host_port: 2234
+#  provider: virtualbox
+#  protected: false

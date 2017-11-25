@@ -1,3 +1,3 @@
 ---
 - src: shelleg.ntp
-- src: shelleg.cratedb
+#- src: shelleg.cratedb

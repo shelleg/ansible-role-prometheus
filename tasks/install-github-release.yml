@@ -1,31 +1,41 @@
 ---
-# - name: "platform-suffix amd64"
-#   set_fact:
-#     prometheus_linux_suffix: "{{ ansible_system }}-amd64"
-#   when: ansible_userspace_bits == 64
-#
-# - name: "platform-suffix i386"
-#   set_fact:
-#     prometheus_linux_suffix: "{{ ansible_system }}-386"
-#   when: ansible_userspace_bits == 32
+- name: "platform-suffix amd64"
+  set_fact:
+    prometheus_linux_suffix: "{{ ansible_system }}-amd64"
+  when: ansible_userspace_bits == 64
+
+- name: "platform-suffix i386"
+  set_fact:
+    prometheus_linux_suffix: "{{ ansible_system }}-386"
+  when: ansible_userspace_bits == 32
 
 - name: "Check prometheus version"
-  shell: "prometheus --version | grep {{ prometheus_version }}"
+  shell: "prometheus --version | grep 'prometheus, version {{ prometheus_version }}'"
   register: prometheus_vercheck
   changed_when: false
   ignore_errors: true
 
 - name: "Check alertmanager version"
-  command: alertmanager --version
+  shell: "alertmanager --version | grep 'alertmanager, version {{ prometheus_alertmanager_version }}'"
   register: alertmanager_vercheck
   changed_when: false
   ignore_errors: true
 
 - name: "Check node_exporter version"
-  command: node_exporter --version
+  shell: "node_exporter --version | grep 'node_exporter, version {{ prometheus_node_exporter_version }}'"
   register: node_exporter_vercheck
   changed_when: false
   ignore_errors: true
+
+- name: "Check pushgateway version"
+  shell: "pushgateway --version | grep 'pushgateway, version {{ prometheus_pushgateway_version }}'"
+  register: pushgateway_vercheck
+  changed_when: false
+  ignore_errors: true
+
+- debug:
+    var: node_exporter_vercheck
+    verbosity: 2
 
 - name: "Create Prometheus group"
   group:
@@ -59,21 +69,43 @@
     src: "{{ prometheus_pkg_url }}"
     dest: "{{ prometheus_install_path }}"
     copy: no
-  when: '"prometheus" in prometheus_components and (prometheus_vercheck|failed)'
+  when:
+    - '"prometheus" in prometheus_components'
+    - 'prometheus_vercheck|failed'
+    - 'prometheus_version not in prometheus_vercheck.stderr'
 
-- name: "Download and untar alertmanager release - {{ prometheus_alaertmanager_version }}"
+- name: "Download and untar alertmanager release - {{ prometheus_alertmanager_version }}"
   unarchive:
-    src: "{{ prometheus_alaertmanager_pkg_url }}"
+    src: "{{ prometheus_alertmanager_pkg_url }}"
     dest: "{{ prometheus_install_path }}"
     copy: no
-  when: '"alertmanager" in prometheus_components and (alertmanager_vercheck|failed)'
+#  when: '"alertmanager" in prometheus_components and (prometheus_alertmanager_version in alertmanager_vercheck.stderr)'
+  when:
+    - '"alertmanager" in prometheus_components'
+    - 'alertmanager_vercheck|failed'
+    - 'prometheus_alertmanager_version not in alertmanager_vercheck.stderr'
+
+#- fail: msg="stam"
 
 - name: "Download and untar node_exporter release - {{ prometheus_node_exporter_version }}"
   unarchive:
     src: "{{ prometheus_node_exporter_pkg_url }}"
     dest: "{{ prometheus_install_path }}"
     copy: no
-  when: '"node_exporter" in prometheus_components and (node_exporter_vercheck|failed)'
+  when:
+    - '"node_exporter" in prometheus_components'
+    - 'node_exporter_vercheck|failed'
+    - 'prometheus_node_exporter_version not in node_exporter_vercheck.stderr'
+
+- name: "Download and untar pushgateway release - {{ prometheus_pushgateway_version }}"
+  unarchive:
+    src: "{{ prometheus_pushgateway_pkg_url }}"
+    dest: "{{ prometheus_install_path }}"
+    copy: no
+  when:
+    - '"pushgateway" in prometheus_components'
+    - 'pushgateway_vercheck|failed'
+    - 'prometheus_pushgateway_version not in pushgateway_vercheck.stderr'
 
 - name: "Download and untar crate_adapter release - {{ prometheus_crate_adapter_version }}"
   unarchive:
@@ -98,13 +130,13 @@
   file:
     state: link
     dest: /usr/bin/{{ binary }}
-    src: "{{ prometheus_install_path }}/alertmanager-{{ prometheus_alaertmanager_version }}.{{ prometheus_linux_suffix }}/{{ binary }}"
+    src: "{{ prometheus_install_path }}/alertmanager-{{ prometheus_alertmanager_version }}.{{ prometheus_linux_suffix }}/{{ binary }}"
   with_items:
     - alertmanager
     - amtool
   loop_control:
     loop_var: binary
-  when: "'prometheus' in prometheus_components"
+  when: "'alertmanager' in prometheus_components"
 
 - name: "Create links for node_exporter binary"
   file:
@@ -112,6 +144,14 @@
     dest: /usr/bin/node_exporter
     src: "{{ prometheus_install_path }}/node_exporter-{{ prometheus_node_exporter_version }}.{{ prometheus_linux_suffix }}/node_exporter"
   when: "'node_exporter' in prometheus_components"
+
+- name: "Create links for pushgateway binary"
+  file:
+    state: link
+    dest: /usr/bin/pushgateway
+    src: "{{ prometheus_install_path }}/pushgateway-{{ prometheus_pushgateway_version }}.{{ prometheus_linux_suffix }}/pushgateway"
+  when: "'pushgateway' in prometheus_components"
+
 
 - name: "Create links for node_exporter binary"
   file:

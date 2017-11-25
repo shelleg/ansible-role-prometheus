@@ -9,12 +9,21 @@ After=network.target
 EnvironmentFile=-/etc/default/prometheus
 User=prometheus
 ExecStart=/usr/bin/prometheus \
-          -config.file={{ prometheus_opt_config_file }} \
-          -storage.local.path={{ prometheus_storage_local_path }} \
-          -web.console.libraries=/usr/share/prometheus/console_libraries \
-          -web.console.templates=/usr/share/prometheus/consoles \
-          {%for flag in prometheus_opts %}-{{ flag }} \
-          {% endfor %}
+          {% if prometheus_version | version_compare('1.8.1', '<=') %}
+            -config.file={{ prometheus_opt_config_file }} \
+            -storage.local.path={{ prometheus_storage_local_path }} \
+            -web.console.libraries=/usr/share/prometheus/console_libraries \
+            -web.console.templates=/usr/share/prometheus/consoles \
+            {%for flag in prometheus_pre2_opts %}-{{ flag }} \
+            {% endfor %}
+          {% else %}
+            --config.file={{ prometheus_opt_config_file }} \
+            --storage.tsdb.path={{ prometheus_storage_local_path }} \
+            --web.console.libraries=/usr/share/prometheus/console_libraries \
+            --web.console.templates=/usr/share/prometheus/consoles \
+            {%for flag in prometheus_opts %}--{{ flag }} \
+            {% endfor %}
+          {% endif %}
           $PROMETHEUS_OPTS
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure

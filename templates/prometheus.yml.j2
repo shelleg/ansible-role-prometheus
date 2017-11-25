@@ -8,6 +8,14 @@ global:
   external_labels:
     monitor: 'master'
 
+{% if "alertmanager" in prometheus_components %}
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - {{ prometheus_alertmanager_opt_listen_ip }}:{{ prometheus_alertmanager_opt_port }}
+{% endif %}
+
 
 {% if promehtues_use_role_rules %}
   {% if prometheus_rule_files is defined %}
@@ -29,13 +37,20 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
+{% if "pushgateway" in prometheus_components %}
+
+  - job_name: 'pushgateway'
+    scrape_interval: 5s
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    static_configs:
+      - targets: ['{{ prometheus_pushgateway_opt_web_listen_address }}']
+{% endif %}
   - job_name: 'node'
 {% if prometheus_static_targets is defined %}
     file_sd_configs:
       - files:
-#        - '{{ prometheus_file_sd_config_path }}/*.json'
         - '{{ prometheus_file_sd_config_path }}/*.yml'
-#        - '{{ prometheus_file_sd_config_path }}/*.yaml'
 {%endif %}
 {% if "node_exporter" in prometheus_components %}
     static_configs:

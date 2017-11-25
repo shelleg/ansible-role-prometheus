@@ -4,17 +4,18 @@
   tasks:
   roles:
     - role: shelleg.ntp
-    - role: shelleg.cratedb
-      crate_adapter_testing: true
-      cratedb_adapter_prometheus_init: true
-    - role: ansible-role-prometheus
-      prometheus_cratedb_remote_write: true
-      prometheus_cratedb_remote_read: true
+#    - role: shelleg.cratedb
+#      crate_adapter_testing: true
+#      cratedb_adapter_prometheus_init: true
+    - role: ../../
+#      prometheus_cratedb_remote_write: true
+#      prometheus_cratedb_remote_read: true
       prometheus_components:
         - alertmanager
         - node_exporter
         - prometheus
-        - crate_adapter
+        - pushgateway
+#        - crate_adapter
       promehtues_use_role_rules: true
       prometheus_static_targets:
       - { name: traefik,
