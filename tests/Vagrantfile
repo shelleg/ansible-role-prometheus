@@ -38,7 +38,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         srv.vm.box_url = servers["box_url"]
       else
         if servers["box_version"] and
-            srv.vm.box_version = servers["box_version"]
+            srv.vm.box_version = "=#{servers["box_version"]}"
           srv.vm.box_check_update = false
         end
       end
