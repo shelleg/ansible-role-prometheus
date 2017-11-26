@@ -4,11 +4,6 @@
 - name: "Include {{ ansible_os_family }} vars"
   include_vars: "{{ ansible_os_family }}.yml"
 
-- name: "Include prometheus_components vars"
-  include_vars: "{{ item }}.yml"
-  with_items:
-    - "{{ prometheus_components }}"
-
 - name: "Include {{ ansible_os_family }} tasks"
   include: "install-{{ ansible_os_family }}-{{ prometheus_installation_method }}.yml"
   when: prometheus_installation_method == 'pkg'
