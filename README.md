@@ -15,12 +15,18 @@ Out Of The Box -> It will install the following prometheus_components:
 
 
 Final-result with defaults:
---------------------------
+---------------------------
 
 * Prometheus listening on default port of 9090 `http://localhost:9090`
 * Node exporter listening on default port of 9100 `http://localhost:9100/metrics`
 * Alertmanager listening on default port of 9093 `http://localhost:9093`
+
+Additional Options:
+-------------------
 * Pushgateway listening on default port of 9091 `http://localhost:9091`
+* Cratedb_adapter listening on port: 9268
+* Custom Alertmanager configurations - example below
+* Custom Prometheus configurations - example below
 
 Role Variables
 --------------
@@ -38,8 +44,6 @@ A few Prometheus tweaks out of the box:
 
   You might disable this when using some logging stack or might use it for debugging when you log stack goes to hell and back ;)
 
-
-
 * `prometheus_skip_config: false` - if you want to install without configuration / stay with the default apt/rpm (or similar style via github) config - set this to `true`
 * `promehtues_use_role_rules: false` - there some sample_alerts I scattered and found useful to build upon so feel free to reuse [ BTW this option will not work without prometheus_skip_config `true` ]
 
@@ -49,7 +53,57 @@ As an example with alertmanager:
 
     prometheus_alertmanager_opts:
       - "web.listen-address={{ prometheus_alertmanager_opt_web_listen_address }}"
-      - "log.format={{ prometheus_alertmanager_opt_log_format }}"
+      - "log.format={{ prometheus_alertmanager_log_format }}"
+
+Alertmanager custom configurations:
+-----------------------------------
+In order to use this option you should set `prometheus_alertmanager_custom_config` to `true`
+Then use the following Options:
+
+* To define receivers:
+The tricky part below was customizing the slack template see the slack.tmpl.j2 to understand how sick this looks like but it works !
+```
+prometheus_alertmanager_recievers:
+  receivers:
+    - name: 'slack'
+      slack_configs:
+      - channel: '#autobots'
+        send_resolved: true
+        api_url: https://hooks.slack.com/services/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
+        title: "{{'{{'}} template \"slack.custom.title\" . {{'}}'}}"
+        text: "{{'{{'}} template \"slack.custom.text_long\" . {{'}}'}}"
+        color: "{{ '{{' }}  if eq .Status \"firing\" {{'}}'}}danger{{'{{'}} else {{'}}'}}good{{'{{'}} end {{'}}'}}"
+        title_link: "{{ '{{' }}  template \"slack.custom.titlelink\" {{ '}}' }}"
+```
+* To define routes:
+```
+prometheus_alertmanager_routes:
+  route:
+    group_by: [ 'alertname', 'cluster', 'service' ]
+    group_wait: 30s
+    group_interval: 5m
+    receiver: slack
+```
+* To define inhibit_rules:
+```
+prometheus_alertmanager_inhibit_rules:
+    inhibit_rules:
+    - source_match:
+        severity: 'major'
+      target_match:
+        severity: 'critical'
+      equal: ['alertname']
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname']
+    - source_match:
+        severity: 'warning'
+      target_match:
+        severity: 'indeterminate'
+      equal: ['alertname']
+```
 
 TODO / WIP (Pull request anyone ? ;)
 ------------------------------------

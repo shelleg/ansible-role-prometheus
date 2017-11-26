@@ -1,0 +1,23 @@
+{{ '{{' }} define "customAlertmanagerURL" {{ '}}' }}{{ prometheus_alertmanager_opt_protocol }}://{{ ansible_all_ipv4_addresses[0] }}:{{ prometheus_alertmanager_opt_port }}/#/alerts?receiver={{ '{{' }} .Receiver {{ '}}' }}{{ '{{' }} end {{ '}}' }}
+
+{{ '{{' }} define "slack.custom.text" {{ '}}' }}
+{{ '{{' }} range .Alerts {{ '}}' }}
+{{ '{{' }} .Annotations.description {{ '}}' }}
+{{ '{{' }} end {{ '}}' }}
+{{ '{{' }} end {{ '}}' }}
+
+{{ '{{' }} define "slack.custom.titlelink" {{ '}}' }}{{ '{{' }} template "customAlertmanagerURL" . {{ '}}' }}{{ '{{' }} end {{ '}}' }}
+
+{{ '{{' }} define "slack.custom.title" {{ '}}' }}
+[{{ '{{' }} .Status | toUpper {{ '}}' }}{{ '{{' }} if eq .Status "firing" {{ '}}' }}:{{ '{{' }} .Alerts.Firing | len {{ '}}' }}{{ '{{' }} end {{ '}}' }}] Monitoring Event Notification
+{{ '{{' }} end {{ '}}' }}
+
+{{ '{{' }} define "slack.custom.text_long" {{ '}}' }}
+{{ '{{' }} range .Alerts {{ '}}' }}
+*Alert:* {{ '{{' }} .Annotations.summary {{ '}}' }} - `{{ '{{' }} .Labels.severity {{ '}}' }}`
+ *Description:* {{ '{{' }} .Annotations.description {{ '}}' }}
+ *Details:*
+{{ '{{' }} range .Labels.SortedPairs {{ '}}' }} • *{{ '{{' }} .Name {{ '}}' }}:* `{{ '{{' }} .Value {{ '}}' }}`
+{{ '{{' }} end {{ '}}' }}
+{{ '{{' }} end {{ '}}' }}
+{{ '{{' }} end {{ '}}' }}

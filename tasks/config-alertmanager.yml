@@ -4,12 +4,43 @@
     src: alertmanager.service.j2
     dest: "{{ prometheus_systemd_dir }}/alertmanager.service"
 
+- name: "crate additional directories"
+  file:
+    path: "{{ dirname }}"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0755
+  with_items:
+    - "{{ prometheus_alertmanager_templates_path }}"
+  loop_control:
+      loop_var: dirname
+
 - name: "Use alertmanager sample configuration"
   copy:
     remote_src: true
     src: "{{ prometheus_install_path }}/alertmanager-{{ prometheus_alertmanager_version }}.{{ prometheus_linux_suffix }}/simple.yml"
-    dest: "{{ prometheus_alertmanager_conf_file }}"
+    dest: "{{ prometheus_alertmanager_config_file }}"
     owner: "{{ prometheus_user }}"
     group: "{{ prometheus_group }}"
     validate: "amtool check-config %s"
   when: prometheus_installation_method == 'github-release' and not prometheus_alertmanager_custom_config
+
+- name: "Copy slack.tmpl to {{ prometheus_alertmanager_templates_path }}"
+  template:
+    src: '{{ item }}.j2'
+    dest: "{{ prometheus_alertmanager_templates_path }}/{{ item }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+    - slack.tmpl
+  when: prometheus_alertmanager_use_slack_tmpl
+
+
+- name: "set alertmanager config yml"
+  template:
+    src: alertmanager.yml.j2
+    dest: "{{ prometheus_alertmanager_config_file }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    # validate: "amtool check-config %s"

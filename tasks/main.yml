@@ -4,18 +4,25 @@
 - name: "Include {{ ansible_os_family }} vars"
   include_vars: "{{ ansible_os_family }}.yml"
 
+- name: "Include prometheus_components vars"
+  include_vars: "{{ item }}.yml"
+  with_items:
+    - "{{ prometheus_components }}"
+
 - name: "Include {{ ansible_os_family }} tasks"
   include: "install-{{ ansible_os_family }}-{{ prometheus_installation_method }}.yml"
   when: prometheus_installation_method == 'pkg'
 
 - name: "Include {{ prometheus_installation_method }} tasks"
   include: "install-{{ prometheus_installation_method }}.yml"
-  when: prometheus_installation_method == 'github-release'
+  when: prometheus_installation_method == 'github-release' or prometheus_installation_method == 'docker'
 
 - name: "Configure prometheus components"
   include: "config-{{ item }}.yml"
   notify: "restart {{ item }}"
-  when: not prometheus_skip_config
+  when:
+    - not prometheus_skip_config
+    - prometheus_installation_method != 'docker'
   with_items:
     - "{{ prometheus_components }}"
   tags:
@@ -31,6 +38,8 @@
     - "{{ prometheus_components }}"
   tags:
     - config
+  when:
+    - prometheus_installation_method != 'docker'
 
 - name: "wait until prometheus service is up - tcp"
   wait_for:

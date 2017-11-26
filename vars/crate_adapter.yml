@@ -1,0 +1,15 @@
+---
+# crate_adapter
+prometheus_crate_adapter_defaults_file: /etc/default/crate_adapter
+prometheus_crate_adapter_opt_port: 9268
+prometheus_crate_adapter_opt_listen_ip: '0.0.0.0'
+prometheus_crate_adapter_opt_web_listen_address: '{{ prometheus_crate_adapter_opt_listen_ip }}:{{ prometheus_crate_adapter_opt_port }}'
+prometheus_crate_adapter_opt_log_format: 'logger:syslog?appname=crate_adapter&local=7'
+prometheus_crate_adapter_opt_log_level: info
+prometheus_crate_adapter_opt_cratedb_addr: "{{ cratedb_addr | d('localhost') }}"
+prometheus_crate_adapter_opt_cratedb_port: "{{ cratedb_port | d('4200') }}"
+prometheus_crate_adapter_opts:
+  - "crate.url=http://{{ prometheus_crate_adapter_opt_cratedb_addr }}:{{ prometheus_crate_adapter_opt_cratedb_port }}/_sql"
+  - "web.listen-address={{ prometheus_crate_adapter_opt_web_listen_address }}"
+  - "log.format={{ prometheus_crate_adapter_opt_log_format }}"
+  - "log.level={{ prometheus_crate_adapter_opt_log_level }}"

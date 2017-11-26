@@ -9,7 +9,7 @@ After=network.target
 EnvironmentFile=-/etc/default/alertmanager
 User=prometheus
 ExecStart=/usr/bin/alertmanager \
-          -config.file={{ prometheus_alertmanager_conf_file }} \
+          -config.file={{ prometheus_alertmanager_config_file }} \
           -storage.path={{ prometheus_alertmanager_storage_path }} \
           {% if prometheus_version | version_compare('1.8.1', '<=') %}
           {%for flag in prometheus_alertmanager_pre2_opts %}-{{ flag }} \

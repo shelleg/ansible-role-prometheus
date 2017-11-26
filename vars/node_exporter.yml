@@ -1,0 +1,10 @@
+---
+# node_exporter
+prometheus_node_exporter_defaults_file: /etc/default/node_exporter
+prometheus_node_exporter_opt_port: 9100
+prometheus_node_exporter_opt_listen_ip: '0.0.0.0'
+prometheus_node_exporter_opt_web_listen_address: '{{ prometheus_node_exporter_opt_listen_ip }}:{{ prometheus_node_exporter_opt_port }}'
+prometheus_node_exporter_opt_log_format: 'logger:syslog?appname=node_exporter&local=7'
+prometheus_node_exporter_opts:
+  - "web.listen-address={{ prometheus_node_exporter_opt_web_listen_address }}"
+  - "log.format={{ prometheus_node_exporter_opt_log_format }}"

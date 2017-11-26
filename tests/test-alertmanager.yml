@@ -1,0 +1,60 @@
+---
+- hosts: centos,ubuntu
+  become: true
+  tasks:
+  roles:
+    - role: shelleg.ntp
+    - role: ../../
+      prometheus_alertmanager_custom_config: true
+      prometheus_alertmanager_default_receiever: slack
+      prometheus_components:
+        - alertmanager
+        - prometheus
+        - node_exporter
+      prometheus_rule_files:
+        worldmate_alerts:
+          src: files/sample_alert.rules.yml
+          dest: sample_alert.rules.yml
+      prometheus_alertmanager_recievers:
+        receivers:
+          - name: 'slack'
+            slack_configs:
+            - channel: '#your_channel'
+              send_resolved: true
+              api_url: https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXTJoXXXXXXXXX
+              title: "{{'{{'}} template \"slack.custom.title\" . {{'}}'}}"
+              text: "{{'{{'}} template \"slack.custom.text_long\" . {{'}}'}}"
+              color: "{{ '{{' }}  if eq .Status \"firing\" {{'}}'}}danger{{'{{'}} else {{'}}'}}good{{'{{'}} end {{'}}'}}"
+              title_link: "{{ '{{' }}  template \"slack.custom.titlelink\" {{ '}}' }}"
+      prometheus_alertmanager_routes:
+        route:
+          group_by: [ 'alertname', 'cluster', 'service' ]
+          group_wait: 30s
+          group_interval: 5m
+          receiver: slack
+      prometheus_alertmanager_inhibit_rules:
+        inhibit_rules:
+        - source_match:
+            severity: 'major'
+          target_match:
+            severity: 'critical'
+          equal: ['alertname']
+        - source_match:
+            severity: 'critical'
+          target_match:
+            severity: 'warning'
+          equal: ['alertname']
+        - source_match:
+            severity: 'warning'
+          target_match:
+            severity: 'indeterminate'
+          equal: ['alertname']
+
+      promehtues_use_role_rules: true
+
+      prometheus_static_targets:
+      - { name: traefik,
+          host: traefik.mydomain.com,
+          port: 8080,
+          metrics_path: /metrics
+        }
