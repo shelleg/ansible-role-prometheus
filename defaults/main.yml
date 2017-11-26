@@ -111,21 +111,21 @@ prometheus_alertmanager_opsgenie_api_host: ''
 prometheus_alertmanager_hipchat_url: ''
 prometheus_alertmanager_hipchat_auth_token: ''
 
-# prometheus_alertmanager_default_receiever: ''
-# prometheus_alertmanager_recievers:
-#   receivers:
-#     - name: 'slack'
-#       slack_configs:
-#       - channel: '#your_channel'
-#         send_resolved: true
-#         api_url: https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXTJoXXXXXXXXX
-# prometheus_alertmanager_routes:
-#   route:
-#     group_by: [ 'alertname', 'cluster', 'service' ]
-#     group_wait: 30s
-#     group_interval: 5m
-#     receiver: slack
-# prometheus_alertmanager_inhibit_rules: ''
+prometheus_alertmanager_default_receiever: ''
+prometheus_alertmanager_recievers:
+ receivers:
+   - name: 'slack'
+     slack_configs:
+     - channel: '#your_channel'
+       send_resolved: true
+       api_url: https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXTJoXXXXXXXXX
+prometheus_alertmanager_routes:
+ route:
+   group_by: [ 'alertname', 'cluster', 'service' ]
+   group_wait: 30s
+   group_interval: 5m
+   receiver: slack
+prometheus_alertmanager_inhibit_rules: ''
 
 prometheus_alertmanager_opt_resolve_timeout:
 prometheus_alertmanager_opt_protocol: http # http/https
