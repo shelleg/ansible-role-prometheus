@@ -1,6 +1,9 @@
 ---
 # defaults file for ansible-role-prometheus
 
+################################################################################
+# prometheus
+################################################################################
 # role flags
 prometheus_skip_config: false
 promehtues_use_role_rules: false
@@ -55,3 +58,150 @@ prometheus_opt_alertmanager_url: "http://{{ ansible_all_ipv4_addresses[0] }}:{{ 
 prometheus_opt_config_file: "{{ prometheus_conf_dir }}/prometheus.yml"
 prometheus_opt_log_format: 'logger:syslog?appname=prometheus&local=7'
 prometheus_opt_log_level: info
+
+# listen on all ipv4 (&v6) interfaces
+prometheus_opt_listen_ip: '0.0.0.0'
+prometheus_opt_web_listen_address: '{{ prometheus_opt_listen_ip }}:{{ prometheus_opt_port }}'
+prometheus_opt_storage_local_dirty: false
+prometheus_opt_storage_local_target_heap_size: '3221225472'
+prometheus_opt_storage_local_retention: "720h" # 1month
+
+prometheus_pre2_opts:
+  - "web.listen-address={{ prometheus_opt_web_listen_address }}"
+  - "log.level={{ prometheus_opt_log_level }}"
+  - "log.format={{ prometheus_opt_log_format }}"
+  - "alertmanager.url={{ prometheus_opt_alertmanager_url }}"
+  - "web.external-url=http://{{ ansible_all_ipv4_addresses[0] }}:{{ prometheus_opt_port }}"
+  - "storage.local.dirty={{ prometheus_opt_storage_local_dirty }}"
+  - "storage.local.target-heap-size={{ prometheus_opt_storage_local_target_heap_size }}"
+  - "storage.local.retention={{ prometheus_opt_storage_local_retention }}"
+
+prometheus_opts:
+  - "web.listen-address={{ prometheus_opt_web_listen_address }}"
+  - "log.level={{ prometheus_opt_log_level }}"
+  - "web.external-url=http://{{ ansible_all_ipv4_addresses[0] }}:{{ prometheus_opt_port }}"
+
+
+prometheus_rule_files: ''
+prometheus_file_sd_config_path: "{{ prometheus_conf_dir }}/jobs"
+
+
+################################################################################
+# alertmanager
+################################################################################
+# cusom opts for config file
+prometheus_alertmanager_templates_path: /etc/prometheus/am-templates
+prometheus_alertmanager_defaults_file: /etc/default/alertmanager
+prometheus_alertmanager_resolve_timeout: 5m
+prometheus_alertmanager_use_slack_tmpl: true
+# prometheus_alertmanager_routes: ''
+
+# SMTP default params
+prometheus_alertmanager_smtp_from: ''
+prometheus_alertmanager_smtp_smarthost: ''
+prometheus_alertmanager_smtp_auth_username: ''
+prometheus_alertmanager_smtp_auth_password: ''
+prometheus_alertmanager_smtp_auth_secret: ''
+# Default values you can see here -> https://prometheus.io/docs/alerting/configuration/
+prometheus_alertmanager_slack_api_url: ''
+prometheus_alertmanager_victorops_api_key: ''
+prometheus_alertmanager_victorops_api_url: ''
+prometheus_alertmanager_pagerduty_url: ''
+prometheus_alertmanager_opsgenie_api_host: ''
+prometheus_alertmanager_hipchat_url: ''
+prometheus_alertmanager_hipchat_auth_token: ''
+
+# prometheus_alertmanager_default_receiever: ''
+# prometheus_alertmanager_recievers:
+#   receivers:
+#     - name: 'slack'
+#       slack_configs:
+#       - channel: '#your_channel'
+#         send_resolved: true
+#         api_url: https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXTJoXXXXXXXXX
+# prometheus_alertmanager_routes:
+#   route:
+#     group_by: [ 'alertname', 'cluster', 'service' ]
+#     group_wait: 30s
+#     group_interval: 5m
+#     receiver: slack
+# prometheus_alertmanager_inhibit_rules: ''
+
+prometheus_alertmanager_opt_resolve_timeout:
+prometheus_alertmanager_opt_protocol: http # http/https
+prometheus_alertmanager_opt_port: 9093
+prometheus_alertmanager_opt_listen_ip: '0.0.0.0'
+prometheus_alertmanager_opt_web_listen_address: '{{ prometheus_alertmanager_opt_listen_ip }}:{{ prometheus_alertmanager_opt_port }}'
+
+# official commandline args
+prometheus_alertmanager_config_file: /etc/prometheus/alertmanager.yml
+# how long to keep data for. (default 120h0m0s)
+# prometheus_alertmanager_data_retention:
+# value example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true" (default "logger:stderr")
+prometheus_alertmanager_log_format: "logger:syslog?appname=alertmanager&local=7"
+# valid levels: [debug, info, warn, error, fatal] (default "info")
+prometheus_alertmanager_log_level: info
+# prometheus_alertmanager_mesh_listen_address:
+# prometheus_alertmanager_mesh_nickname:
+# prometheus_alertmanager_mesh_password:
+# prometheus_alertmanager_mesh_peer:
+# prometheus_alertmanager_mesh_peer_id:
+prometheus_alertmanager_storage_path: /var/lib/prometheus/alertmanager
+prometheus_alertmanager_web_external_url: '{{ prometheus_alertmanager_opt_web_listen_address }}'
+prometheus_alertmanager_web_listen_address:
+prometheus_alertmanager_web_route_prefix: '{{ prometheus_alertmanager_web_external_url }}'
+
+prometheus_alertmanager_pre2_opts:
+  - "web.listen-address={{ prometheus_alertmanager_opt_web_listen_address }}"
+  - "log.format={{ prometheus_alertmanager_log_format | default(omit) }}"
+  - "log.level={{ prometheus_alertmanager_log_level }}"
+
+prometheus_alertmanager_opts:
+  - "web.listen-address={{ prometheus_alertmanager_opt_web_listen_address }}"
+  - "log.level={{ prometheus_alertmanager_log_level }}"
+
+################################################################################
+# node_exporter
+################################################################################
+prometheus_node_exporter_defaults_file: /etc/default/node_exporter
+prometheus_node_exporter_opt_port: 9100
+prometheus_node_exporter_opt_listen_ip: '0.0.0.0'
+prometheus_node_exporter_opt_web_listen_address: '{{ prometheus_node_exporter_opt_listen_ip }}:{{ prometheus_node_exporter_opt_port }}'
+prometheus_node_exporter_opt_log_format: 'logger:syslog?appname=node_exporter&local=7'
+prometheus_node_exporter_opts:
+  - "web.listen-address={{ prometheus_node_exporter_opt_web_listen_address }}"
+  - "log.format={{ prometheus_node_exporter_opt_log_format }}"
+
+################################################################################
+# Push gateway
+################################################################################
+prometheus_pushgateway_persistence_file: /var/lib/prometheus/pushgatway-data-file
+prometheus_pushgateway_persistence_interval: "5m"
+prometheus_pushgateway_conf_file: /etc/prometheus/alertmanager.yml
+prometheus_pushgateway_opt_port: 9091
+prometheus_pushgateway_web_telemetry_path: '/metrics'
+prometheus_pushgateway_opt_listen_ip: '0.0.0.0'
+prometheus_pushgateway_opt_web_listen_address: '{{ prometheus_pushgateway_opt_listen_ip }}:{{ prometheus_pushgateway_opt_port }}'
+prometheus_pushgateway_opt_log_format: 'logger:syslog?appname=pushgateway&local=7'
+prometheus_pushgateway_opt_log_level:
+prometheus_pushgateway_opts:
+  - "web.listen-address={{ prometheus_pushgateway_opt_web_listen_address }}"
+  - "log.format={{ prometheus_pushgateway_opt_log_format }}"
+  - "log.level={{ prometheus_pushgateway_opt_log_level }}"
+
+################################################################################
+# crate_adapter
+################################################################################
+prometheus_crate_adapter_defaults_file: /etc/default/crate_adapter
+prometheus_crate_adapter_opt_port: 9268
+prometheus_crate_adapter_opt_listen_ip: '0.0.0.0'
+prometheus_crate_adapter_opt_web_listen_address: '{{ prometheus_crate_adapter_opt_listen_ip }}:{{ prometheus_crate_adapter_opt_port }}'
+prometheus_crate_adapter_opt_log_format: 'logger:syslog?appname=crate_adapter&local=7'
+prometheus_crate_adapter_opt_log_level: info
+prometheus_crate_adapter_opt_cratedb_addr: "{{ cratedb_addr | d('localhost') }}"
+prometheus_crate_adapter_opt_cratedb_port: "{{ cratedb_port | d('4200') }}"
+prometheus_crate_adapter_opts:
+  - "crate.url=http://{{ prometheus_crate_adapter_opt_cratedb_addr }}:{{ prometheus_crate_adapter_opt_cratedb_port }}/_sql"
+  - "web.listen-address={{ prometheus_crate_adapter_opt_web_listen_address }}"
+  - "log.format={{ prometheus_crate_adapter_opt_log_format }}"
+  - "log.level={{ prometheus_crate_adapter_opt_log_level }}"

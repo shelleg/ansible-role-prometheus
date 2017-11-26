@@ -4,9 +4,9 @@
   tasks:
   roles:
     - role: shelleg.ntp
-   - role: shelleg.cratedb
-     crate_adapter_testing: true
-     cratedb_adapter_prometheus_init: true
+    - role: shelleg.cratedb
+      crate_adapter_testing: true
+      cratedb_adapter_prometheus_init: true
     - role: ../../
       prometheus_cratedb_remote_write: true
       prometheus_cratedb_remote_read: true

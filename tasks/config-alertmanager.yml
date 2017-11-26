@@ -43,4 +43,5 @@
     dest: "{{ prometheus_alertmanager_config_file }}"
     owner: "{{ prometheus_user }}"
     group: "{{ prometheus_group }}"
-    # validate: "amtool check-config %s"
+    validate: "amtool check-config %s"
+  when: prometheus_alertmanager_custom_config
