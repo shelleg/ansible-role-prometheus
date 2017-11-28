@@ -50,6 +50,13 @@
             severity: 'indeterminate'
           equal: ['alertname']
 
+      prometheus_jobs:
+        - job_name: traefik
+          scrape_interval: 10s
+          scrape_timeout: 10s
+          static_configs:
+            - targets: ['traefik.mydomain.com:8080']
+
       promehtues_use_role_rules: true
 
       prometheus_static_targets:
