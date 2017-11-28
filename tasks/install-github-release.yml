@@ -14,24 +14,28 @@
   register: prometheus_vercheck
   changed_when: false
   ignore_errors: true
+  when: "'prometheus' in prometheus_components"
 
 - name: "Check alertmanager version"
   shell: "alertmanager --version | grep 'alertmanager, version {{ prometheus_alertmanager_version }}'"
   register: alertmanager_vercheck
   changed_when: false
   ignore_errors: true
+  when: "'alertmanager' in prometheus_components"
 
 - name: "Check node_exporter version"
   shell: "node_exporter --version | grep 'node_exporter, version {{ prometheus_node_exporter_version }}'"
   register: node_exporter_vercheck
   changed_when: false
   ignore_errors: true
+  when: "'node_exporter' in prometheus_components"
 
 - name: "Check pushgateway version"
   shell: "pushgateway --version | grep 'pushgateway, version {{ prometheus_pushgateway_version }}'"
   register: pushgateway_vercheck
   changed_when: false
   ignore_errors: true
+  when: "'pushgateway' in prometheus_components"
 
 - debug:
     var: node_exporter_vercheck
@@ -79,13 +83,10 @@
     src: "{{ prometheus_alertmanager_pkg_url }}"
     dest: "{{ prometheus_install_path }}"
     copy: no
-#  when: '"alertmanager" in prometheus_components and (prometheus_alertmanager_version in alertmanager_vercheck.stderr)'
   when:
     - '"alertmanager" in prometheus_components'
     - 'alertmanager_vercheck|failed'
     - 'prometheus_alertmanager_version not in alertmanager_vercheck.stderr'
-
-#- fail: msg="stam"
 
 - name: "Download and untar node_exporter release - {{ prometheus_node_exporter_version }}"
   unarchive:
@@ -151,7 +152,6 @@
     dest: /usr/bin/pushgateway
     src: "{{ prometheus_install_path }}/pushgateway-{{ prometheus_pushgateway_version }}.{{ prometheus_linux_suffix }}/pushgateway"
   when: "'pushgateway' in prometheus_components"
-
 
 - name: "Create links for node_exporter binary"
   file:

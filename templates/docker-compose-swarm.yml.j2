@@ -1,0 +1,109 @@
+{{ 'version: \'3.2\'' }}
+
+volumes:
+    prometheus_data: {{ '{}' }}
+    grafana_data: {{ '{}' }}
+
+networks:
+  monitoring-front-tier:
+    driver: overlay
+  monitoring-back-tier:
+    driver: overlay
+  proxy:
+    external: true
+
+services:
+  # main prometheus server
+  {{ prometheus_service_name }}:
+    image: {{ prometheus_image_name }}:v{{ prometheus_version }}
+    volumes:
+      - {{ prometheus_conf_dir }}:/etc/prometheus/
+      - {{ prometheus_home_dir }}:/prometheus
+    command:
+      - '-config.file=/etc/prometheus/prometheus.yml'
+      - '-storage.local.path=/prometheus'
+    networks:
+      - monitoring-back-tier
+      - proxy
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  # prometheus official node-exporter
+  {{ prometheus_node_exporter_service_name }}:
+    image: {{ prometheus_node_exporter_image_name }}:v{{ node_exporter_version }}
+    expose:
+      - {{ prometheus_node_exporter_opt_port }}
+    volumes:
+      - /proc:/host/proc
+      - /sys:/host/sys
+      - /:/rootfs
+    hostname: "{{.Node.ID}}"
+    command: -collector.procfs "/host/proc" -collector.sysfs /host/sys -collector.textfile.directory /etc/node-exporter/ -collectors.enabled 'conntrack,diskstats,entropy,filefd,filesystem,loadavg,mdadm,meminfo,netdev,netstat,stat,textfile,time,vmstat,ipvs' -collector.filesystem.ignored-mount-points "^/(sys|proc|dev|host|etc)($$|/)"
+    networks:
+      - monitoring-back-tier
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 32M
+        reservations:
+          cpus: '0.10'
+          memory: 16M
+
+  # prometheus alertmanager
+  {{ prometheus_alertmanager_service_name }}:
+    image: {{ prometheus_alertmanager_image_name }}:v{{ alertmanager_version }}
+    ports:
+      - {{ prometheus_alertmanager_opt_port }}:{{ prometheus_alertmanager_opt_port }}
+    volumes:
+      - {{ prometheus_conf_dir }}:/etc/alertmanager/
+      - {{ prometheus_alertmanager_storage_path }}:/alertmanager
+    networks:
+      - monitoring-back-tier
+      - proxy
+    command:
+      - '-config.file=/etc/alertmanager/alertmanager.yml'
+      - '-storage.path=/alertmanager'
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  # docker metrics
+  {{ prometheus_cadvisor_service_name }}:
+    #hostname: ca-'{{.Node.ID}}'
+    image: {{ prometheus_cadvisor_image_name }}:v{{ prometheus_cadvisor_version }}
+    expose:
+      - {{ prometheus_cadvisor_opt_listen_port }}
+    ports:
+      - {{ prometheus_cadvisor_opt_listen_port }}:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitoring-back-tier
+    deploy:
+      mode: global
+
+  # graphing
+  {{ prometheus_grafana_service_name }}:
+    image: {{ prometheus_grafana_image_name }}:{{ prometheus_grafana_version }}
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    env_file:
+      - grafana/config
+    networks:
+      - monitoring-back-tier
+      - monitoring-front-tier
+      - proxy
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager

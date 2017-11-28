@@ -35,6 +35,9 @@ prometheus_pushgateway_pkg_url: https://github.com/prometheus/pushgateway/releas
 prometheus_crate_adapter_version: 0.1-2017100611-d24e213
 prometheus_crate_adapter_pkg_url: https://cdn.crate.io/downloads/dist/prometheus/crate_adapter-{{ prometheus_crate_adapter_version }}.{{ ansible_system|lower }}.{{ prometheus_linux_arch }}.tar.gz
 
+# docker related
+
+
 # default components
 prometheus_components:
   - alertmanager
@@ -47,6 +50,7 @@ prometheus_group: prometheus
 
 prometheus_defaults_file: /etc/default/alertmanager
 prometheus_conf_dir: /etc/prometheus
+prometheus_file_sd_config_path: /etc/prometheus/targets
 prometheus_home_dir: /var/lib/prometheus
 
 prometheus_rules_dir: "{{ prometheus_conf_dir }}/alerts"
@@ -82,12 +86,12 @@ prometheus_opts:
   - "web.external-url=http://{{ ansible_all_ipv4_addresses[0] }}:{{ prometheus_opt_port }}"
 
 
-prometheus_rule_files: ''
-prometheus_file_sd_config_path: "{{ prometheus_conf_dir }}/jobs"
-
-
-################################################################################
-# alertmanager
+prometheus_rule_files:
+  - job_name: traefik
+    scrape_interval: 10s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['traefik.mydomain.com:8080']
 ################################################################################
 # cusom opts for config file
 prometheus_alertmanager_templates_path: /etc/prometheus/am-templates

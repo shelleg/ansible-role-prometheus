@@ -1,0 +1,20 @@
+---
+
+prometheus_stack_name: prometheus
+prometheus_service_name: prometheus
+prometheus_image_name: 'prom/prometheus'
+
+prometheus_node_exporter_service_name: node_exporter
+prometheus_node_exporter_image_name: 'prom/node_exporter'
+
+prometheus_alertmanager_service_name: alertmanager
+prometheus_alertmanager_image_name: 'prom/alertmanager'
+
+prometheus_cadvisor_version: 0.28.2
+prometheus_cadvisor_opt_listen_port: 8080
+prometheus_cadvisor_service_name: cadvisor
+prometheus_cadvisor_image_name: 'google/cadvisor'
+
+prometheus_grafana_version: 4.6.2
+prometheus_grafana_service_name: cadvisor
+prometheus_grafana_image_name: 'google/cadvisor'

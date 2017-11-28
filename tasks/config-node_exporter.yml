@@ -3,3 +3,4 @@
   template:
     src: node_exporter.service.j2
     dest: "{{ prometheus_systemd_dir }}/node_exporter.service"
+  when: prometheus_installation_method != 'docker'

@@ -8,20 +8,22 @@
   include: "install-{{ ansible_os_family }}-{{ prometheus_installation_method }}.yml"
   when: prometheus_installation_method == 'pkg'
 
+- name: "include docekr specific vars"
+  include_vars: docker.yml
+  when: prometheus_installation_method == 'docker'
+
 - name: "Include {{ prometheus_installation_method }} tasks"
   include: "install-{{ prometheus_installation_method }}.yml"
   when: prometheus_installation_method == 'github-release' or prometheus_installation_method == 'docker'
 
 - name: "Configure prometheus components"
   include: "config-{{ item }}.yml"
-  notify: "restart {{ item }}"
+#  notify: "restart {{ item }}"
   when:
     - not prometheus_skip_config
     - prometheus_installation_method != 'docker'
   with_items:
     - "{{ prometheus_components }}"
-  tags:
-    - prom-config
 
 - name: "Enable / Start prometheus components"
   systemd:
@@ -31,8 +33,6 @@
     name: "{{ item }}"
   with_items:
     - "{{ prometheus_components }}"
-  tags:
-    - config
   when:
     - prometheus_installation_method != 'docker'
 

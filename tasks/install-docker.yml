@@ -1,1 +1,43 @@
 ---
+- name: "Override vars for Docker deployment"
+  set_fact:
+    prometheus_user: root
+    prometheus_group: root
+    prometheus_alertmanager_opt_listen_ip: "{{ prometheus_alertmanager_service_name }}"
+    prometheus_node_exporter_opt_listen_ip: "{{ prometheus_node_exporter_service_name }}"
+    # prometheus_crate_adapter_opt_listen_ip:
+
+- name: "Create prometheus config directory"
+  file:
+    state: directory
+    dest: "{{ dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0750
+  with_items:
+    - "{{ prometheus_storage_local_path }}"
+    - "{{ prometheus_conf_dir }}"
+    - "{{ prometheus_install_path }}"
+  loop_control:
+    loop_var: dir
+
+- name: "Generate docker compose"
+  template:
+    src: docker-compose-swarm.yml.j2
+    dest: "/tmp/docker-compose.yml"
+
+- name: "cleanup stack if recreate is true"
+  shell: "docker stack down {{ prometheus_stack_name }}"
+  ignore_errors: true
+  args:
+    chdir: "/tmp/"
+  with_items:
+    - docker-compose.yml
+
+- name: "User docker stack in Docker swarm mode"
+  shell: "docker stack deploy -c docker-compose.yml {{ prometheus_stack_name }}"
+  args:
+    chdir: "/tmp"
+  register: swarm_stack_stdout
+  with_items:
+    - docker-compose.yml

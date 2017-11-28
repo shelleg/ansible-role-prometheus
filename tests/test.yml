@@ -2,24 +2,34 @@
 - hosts: centos,ubuntu
   become: true
   tasks:
-  roles:
-    - role: shelleg.ntp
-#    - role: shelleg.cratedb
-#      crate_adapter_testing: true
-#      cratedb_adapter_prometheus_init: true
-    - role: ../../
-#      prometheus_cratedb_remote_write: true
-#      prometheus_cratedb_remote_read: true
-      prometheus_components:
-        - alertmanager
-        - node_exporter
-        - prometheus
-        - pushgateway
-#        - crate_adapter
-      promehtues_use_role_rules: true
-      prometheus_static_targets:
-      - { name: traefik,
-          host: traefik.mydomain.com,
-          port: 8080,
-          metrics_path: /metrics
-        }
+    - debug: msg="{{ playbook_dir }}/../defaults/main.yml"
+    - name: "Include vars"
+      include_vars: "{{ playbook_dir }}/../defaults/main.yml"
+    - debug: var=prometheus_jobs
+    - debug:
+        msg: "{{ prometheus_jobs | to_nice_yaml }}"
+    - template:
+        src: ../templates/prometheus.yml.j2
+        dest: /tmp/prometheus.yml
+
+#   roles:
+#     - role: shelleg.ntp
+# #    - role: shelleg.cratedb
+# #      crate_adapter_testing: true
+# #      cratedb_adapter_prometheus_init: true
+#     - role: ../../
+# #      prometheus_cratedb_remote_write: true
+# #      prometheus_cratedb_remote_read: true
+#       prometheus_components:
+#         - alertmanager
+#         - node_exporter
+#         - prometheus
+#         - pushgateway
+# #        - crate_adapter
+#       promehtues_use_role_rules: true
+#       prometheus_static_targets:
+#       - { name: traefik,
+#           host: traefik.mydomain.com,
+#           port: 8080,
+#           metrics_path: /metrics
+#         }

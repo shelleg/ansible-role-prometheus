@@ -1,5 +1,4 @@
 ---
-
 - name: "Set promtool flags based on version"
   block:
   - set_fact:
@@ -8,8 +7,6 @@
   - set_fact:
       promtool_check_rules_cmd: 'promtool check-rules'
   when: prometheus_version |  version_compare('1.8.1', operator='<=')
-  tags:
-    - doit
 
 - block:
   - set_fact:
@@ -18,12 +15,9 @@
   - set_fact:
       promtool_check_rules_cmd: 'promtool check rules'
   when: prometheus_version |  version_compare('1.8.1', operator='>')
-  tags:
-    - doit
 
-- debug: var=promtool_check_config_cmd
-  tags:
-    - doit
+- debug:
+    var: promtool_check_config_cmd
 
 - name: "crate additional directories"
   file:
@@ -45,6 +39,7 @@
     dest: "{{ prometheus_systemd_dir }}/prometheus.service"
   notify:
     - reload prometheus
+  when: prometheus_installation_method != 'docker'
 
 - block:
   - name: "Set prometheus_rule_files [=>2.0.0]"
@@ -62,7 +57,7 @@
           src:  sample_alert.rules
           dest: sample_alert.rules
     when: prometheus_version | version_compare('2.0.0', operator='>=')
-  when: prometheus_rule_files == '' 
+  when: prometheus_rule_files == ''
 
 - name: "Copy rule files from playbook's, if any"
   copy:
@@ -70,13 +65,9 @@
     dest: "{{ prometheus_rules_dir }}/{{ rule.value.dest }}"
     validate: "{{ promtool_check_rules_cmd }} %s"
   with_dict: '{{ prometheus_rule_files }}'
-  notify:
-    - reload prometheus
   loop_control:
       loop_var: rule
-
   when: promehtues_use_role_rules
-
 
 - name: "Create sd_files"
   include: sd-create.yml
@@ -85,8 +76,6 @@
   with_items: '{{ prometheus_static_targets }}'
   loop_control:
     loop_var: sd
-  tags:
-    - job_file
   when: prometheus_static_targets is defined
 
 - name: "set prometheus config yml"
@@ -96,5 +85,3 @@
     owner: "{{ prometheus_user }}"
     group: "{{ prometheus_group }}"
     validate: "{{ promtool_check_config_cmd }} %s"
-  tags:
-    - job_file

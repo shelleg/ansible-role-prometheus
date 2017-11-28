@@ -3,6 +3,7 @@
   template:
     src: alertmanager.service.j2
     dest: "{{ prometheus_systemd_dir }}/alertmanager.service"
+  when: prometheus_installation_method != 'docker'
 
 - name: "crate additional directories"
   file:
@@ -24,7 +25,8 @@
     owner: "{{ prometheus_user }}"
     group: "{{ prometheus_group }}"
     validate: "amtool check-config %s"
-  when: prometheus_installation_method == 'github-release' and not prometheus_alertmanager_custom_config
+  when: not prometheus_alertmanager_custom_config and (prometheus_installation_method == 'github-release' or prometheus_installation_method == 'docker')
+
 
 - name: "Copy slack.tmpl to {{ prometheus_alertmanager_templates_path }}"
   template:
@@ -35,7 +37,6 @@
   with_items:
     - slack.tmpl
   when: prometheus_alertmanager_use_slack_tmpl
-
 
 - name: "set alertmanager config yml"
   template:
