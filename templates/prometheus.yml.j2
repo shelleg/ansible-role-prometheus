@@ -8,15 +8,9 @@ global:
   external_labels:
     monitor: 'master'
 
-{% if "alertmanager" in prometheus_components %}
-alerting:
-  alertmanagers:
-  - static_configs:
-    - targets:
-      - {{ prometheus_alertmanager_opt_listen_ip }}:{{ prometheus_alertmanager_opt_port }}
-{% endif %}
-
-
+# Add Alert rules via prometheus_rule_files variable which is basically a source list
+# (full path or relative to roles files dir) and destination dir is what we configured in the prometheus_rules_dir
+# variable
 {% if prometheus_rule_files is defined %}
 # Rule files specifies a list of files from which rules are read.
 rule_files:
@@ -25,34 +19,44 @@ rule_files:
   {% endfor %}
 {% endif %}
 
+{% if "alertmanager" in prometheus_components %}
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - {{ prometheus_alertmanager_opt_listen_ip }}:{{ prometheus_alertmanager_opt_port }}
+{% endif %}
 
 # A list of scrape configurations.
 scrape_configs:
-
-  - job_name: 'prometheus'
-    scrape_interval: 10s
-    scrape_timeout:  10s
-    static_configs:
-      - targets: ['localhost:9090']
+# Let prometheus scrape itself by default ...
+- job_name: 'prometheus'
+  scrape_interval: 10s
+  scrape_timeout:  10s
+  static_configs:
+    - targets: ['localhost:9090']
+# Assuming node_exporter is running / managed by this role - by default ...
+{% if "node_exporter" in prometheus_components %}
+  static_configs:
+    - targets: ['{{ prometheus_node_exporter_opt_listen_ip }}:{{ prometheus_node_exporter_opt_port }}']
+{% endif %}
 
 {% if "pushgateway" in prometheus_components %}
-
-  - job_name: 'pushgateway'
-    scrape_interval: 5s
-    # metrics_path defaults to '/metrics'
-    # scheme defaults to 'http'.
-    static_configs:
-      - targets: ['{{ prometheus_pushgateway_opt_web_listen_address }}']
+- job_name: 'pushgateway'
+scrape_interval: 5s
+# metrics_path defaults to '/metrics'
+# scheme defaults to 'http'.
+  static_configs:
+    - targets: ['{{ prometheus_pushgateway_opt_web_listen_address }}']
 {% endif %}
-  - job_name: 'node'
 {% if prometheus_static_targets is defined %}
-    file_sd_configs:
-      - files:
-        - '{{ prometheus_file_sd_config_path }}/*.yml'
+  file_sd_configs:
+    - files:
+      - '{{ prometheus_file_sd_config_path }}/*.yml'
 {%endif %}
-{% if "node_exporter" in prometheus_components %}
-    static_configs:
-      - targets: ['{{ prometheus_node_exporter_opt_listen_ip }}:{{ prometheus_node_exporter_opt_port }}']
+
+{% if prometheus_jobs != '' %}
+{{ prometheus_jobs | to_yaml }}
 {% endif %}
 
 {% if "crate_adapter" in prometheus_components %}
