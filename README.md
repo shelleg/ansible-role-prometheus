@@ -11,6 +11,7 @@ Out of the box, it will install the following prometheus components:
   - [Node exporter](https://github.com/prometheus/node_exporter) version `0.15.1`
   - [Pushgateway](https://github.com/prometheus/pushgateway) version `0.4.0`. Important [notes](https://prometheus.io/docs/practices/pushing/) on pushing over pulling.
   (still with no official release using)
+  - [Elasticsearch exporter](https://github.com/justwatchcom/elasticsearch_exporter) version `1.0.2`
   - [CrateDB adapter](https://github.com/crate/crate_adapter) version `0.1-2017100611-d24e213`
 
 
