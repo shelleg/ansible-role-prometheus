@@ -1,0 +1,9 @@
+---
+- hosts: centos,ubuntu
+  become: true
+  tasks:
+  roles:
+    - role: shelleg.ntp
+    - role: role_under_test
+      prometheus_components:
+        - prometheus

@@ -1,0 +1,41 @@
+---
+services: docker
+
+env:
+  - distro: centos7
+    playbook: test-prometheus.yml
+  - distro: ubuntu1604
+    playbook: test-prometheus.yml
+
+  - distro: centos7
+    playbook: test-node_exporter.yml
+  - distro: ubuntu1604
+    playbook: test-node_exporter.yml
+
+  - distro: centos7
+    playbook: test-pushgateway.yml
+  - distro: ubuntu1604
+    playbook: test-pushgateway.yml
+
+  - distro: centos7
+    playbook: test-elasticsearch_exporter.yml
+  - distro: ubuntu1604
+    playbook: test-elasticsearch_exporter.yml
+
+  - distro: centos7
+    playbook: test-alertmanager.yml
+  - distro: ubuntu1604
+    playbook: test-alertmanager.yml
+
+  - distro: centos7
+    playbook: test-cratedb_adapter.yml
+  - distro: ubuntu1604
+    playbook: test-cratedb_adapter.yml
+
+
+script:
+  - chmod +x ./tests/roles-test-shim//ansible-role-test.sh
+  - ./tests/roles-test-shim/ansible-role-test.sh
+
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/

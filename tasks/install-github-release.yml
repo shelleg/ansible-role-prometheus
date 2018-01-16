@@ -30,6 +30,13 @@
   ignore_errors: true
   when: "'node_exporter' in prometheus_components"
 
+- name: "Check elasticsearch_exporter version"
+  shell: "elasticsearch_exporter --version | grep 'elasticsearch_exporter, version {{ prometheus_node_exporter_version }}'"
+  register: elasticsearch_exporter_vercheck
+  changed_when: false
+  ignore_errors: true
+  when: "'elasticsearch_exporter' in prometheus_components"
+
 - name: "Check pushgateway version"
   shell: "pushgateway --version | grep 'pushgateway, version {{ prometheus_pushgateway_version }}'"
   register: pushgateway_vercheck
@@ -98,6 +105,16 @@
     - 'node_exporter_vercheck|failed'
     - 'prometheus_node_exporter_version not in node_exporter_vercheck.stderr'
 
+- name: "Download and untar elasticsearch_exporter release - {{ prometheus_elasticsearch_exporter_version }}"
+  unarchive:
+    src: "{{ prometheus_elasticsearch_exporter_pkg_url }}"
+    dest: "{{ prometheus_install_path }}"
+    copy: no
+  when:
+    - '"elasticsearch_exporter" in prometheus_components'
+    - 'elasticsearch_exporter_vercheck|failed'
+    - 'prometheus_elasticsearch_exporter_version not in elasticsearch_exporter_vercheck.stderr'
+
 - name: "Download and untar pushgateway release - {{ prometheus_pushgateway_version }}"
   unarchive:
     src: "{{ prometheus_pushgateway_pkg_url }}"
@@ -145,6 +162,13 @@
     dest: /usr/bin/node_exporter
     src: "{{ prometheus_install_path }}/node_exporter-{{ prometheus_node_exporter_version }}.{{ prometheus_linux_suffix }}/node_exporter"
   when: "'node_exporter' in prometheus_components"
+
+- name: "Create links for elasticsearch_exporter binary"
+  file:
+    state: link
+    dest: /usr/bin/elasticsearch_exporter
+    src: "{{ prometheus_install_path }}/elasticsearch_exporter-{{ prometheus_elasticsearch_exporter_version }}.{{ prometheus_linux_suffix }}/elasticsearch_exporter"
+  when: "'elasticsearch_exporter' in prometheus_components"
 
 - name: "Create links for pushgateway binary"
   file:

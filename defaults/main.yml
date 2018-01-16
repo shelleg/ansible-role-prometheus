@@ -35,6 +35,10 @@ prometheus_pushgateway_pkg_url: https://github.com/prometheus/pushgateway/releas
 prometheus_crate_adapter_version: 0.1-2017100611-d24e213
 prometheus_crate_adapter_pkg_url: https://cdn.crate.io/downloads/dist/prometheus/crate_adapter-{{ prometheus_crate_adapter_version }}.{{ ansible_system|lower }}.{{ prometheus_linux_arch }}.tar.gz
 
+# https://github.com/justwatchcom/elasticsearch_exporter/releases/download/v1.0.2/elasticsearch_exporter-1.0.2.linux-amd64.tar.gz
+prometheus_elasticsearch_exporter_version: 1.0.2
+prometheus_elasticsearch_exporter_pkg_url: https://github.com/justwatchcom/elasticsearch_exporter/releases/download/v{{ prometheus_elasticsearch_exporter_version }}/elasticsearch_exporter-{{ prometheus_elasticsearch_exporter_version }}.{{ prometheus_linux_suffix }}.tar.gz
+
 # docker related
 
 
@@ -44,6 +48,7 @@ prometheus_components:
   - node_exporter
   - prometheus
 #  - pushgateway
+#  - elasticsearch_exporter
 
 prometheus_user: prometheus
 prometheus_group: prometheus
@@ -54,6 +59,13 @@ prometheus_file_sd_config_path: /etc/prometheus/targets
 prometheus_home_dir: /var/lib/prometheus
 
 prometheus_rules_dir: "{{ prometheus_conf_dir }}/alerts"
+#prometheus_rule_files:
+#  sample_alerts:
+#    src:  '{{ "sample_alert.rules.yml" if (prometheus_version | version_compare("2.0.0", "=>")) else "sample_alert.rules" }}'
+#    dest: '{{ "sample_alert.rules.yml" if (prometheus_version | version_compare("2.0.0", "=>")) else "sample_alert.rules" }}'
+  # docker_alerts:
+  #   src: docker_alerts.rules
+  #   dest: docker_alerts.rules
 
 prometheus_storage_local_path: /var/lib/prometheus/data
 prometheus_opt_port: 9090
@@ -192,6 +204,26 @@ prometheus_pushgateway_opts:
   - "web.listen-address={{ prometheus_pushgateway_opt_web_listen_address }}"
   - "log.format={{ prometheus_pushgateway_opt_log_format }}"
   - "log.level={{ prometheus_pushgateway_opt_log_level }}"
+
+################################################################################
+# elasticsearch_exporter
+################################################################################
+
+prometheus_elasticsearch_exporter_defaults_file: /etc/default/elasticsearch_exporter
+prometheus_elasticsearch_exporter_conf_file: /etc/prometheus/elasticsearch_exporter.yml
+prometheus_elasticsearch_exporter_opt_port: 9108
+prometheus_elasticsearch_exporter_opt_listen_ip: '0.0.0.0'
+prometheus_elasticsearch_exporter_opt_web_listen_address: '{{ prometheus_elasticsearch_exporter_opt_listen_ip }}:{{ prometheus_elasticsearch_exporter_opt_port }}'
+prometheus_elasticsearch_exporter_default_es: http://127.0.0.1:9200
+#prometheus_alertmanager_opt_log_format: '{{ "logger:syslog?appname=alertmanager&local=7" if (prometheus_version | version_compare("2.0.0", "=>")) else " " }}'
+
+prometheus_elasticsearch_exporter_opts:
+  - "web.listen-address={{ prometheus_elasticsearch_exporter_opt_web_listen_address }}"
+  - "es.uri={{ prometheus_elasticsearch_exporter_default_es }}"
+
+# alertmanager config options
+# prometheus_alertmanager_resolve_timeout
+
 
 ################################################################################
 # crate_adapter

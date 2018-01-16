@@ -1,0 +1,5 @@
+---
+- name: "set elasticsearch_exporter service"
+  template:
+    src: elasticsearch_exporter.service.j2
+    dest: "{{ prometheus_systemd_dir }}/elasticsearch_exporter.service"

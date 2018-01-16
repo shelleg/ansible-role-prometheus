@@ -57,6 +57,13 @@
     delay: 10
   when: "'node_exporter' in prometheus_components"
 
+- name: "wait until elasticsearch_exporter service is up - tcp"
+  wait_for:
+    host: "{{ prometheus_elasticsearch_exporter_opt_listen_ip }}"
+    port: "{{ prometheus_elasticsearch_exporter_opt_port }}"
+    delay: 10
+  when: "'elasticsearch_exporter' in prometheus_components"
+
 - name: "wait until pushgateway service is up - tcp"
   wait_for:
     host: "{{ prometheus_pushgateway_opt_listen_ip }}"

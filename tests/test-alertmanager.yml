@@ -1,10 +1,10 @@
 ---
-- hosts: centos,ubuntu
+- hosts: all
   become: true
   tasks:
   roles:
     - role: shelleg.ntp
-    - role: ../../
+    - role: role_under_test
       prometheus_alertmanager_custom_config: true
       prometheus_alertmanager_default_receiever: slack
       prometheus_components:

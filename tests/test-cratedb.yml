@@ -7,7 +7,7 @@
     - role: shelleg.cratedb
       crate_adapter_testing: true
       cratedb_adapter_prometheus_init: true
-    - role: ../../
+    - role: role_under_test
       prometheus_cratedb_remote_write: true
       prometheus_cratedb_remote_read: true
       prometheus_alertmanager_custom_config: true
