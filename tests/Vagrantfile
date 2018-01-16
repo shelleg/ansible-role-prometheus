@@ -91,8 +91,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         if servers["inventory"] != nil
           ansible.inventory_path = servers["inventory"]
         end
-        ansible.sudo = "true"
-        ansible.sudo_user = "root"
+        ansible.become = "true"
+        ansible.become_user = "root"
         ansible.host_key_checking = "false"
         ansible.verbose = "-v"
 
