@@ -1,9 +1,11 @@
 ---
-- hosts: centos,ubuntu
+- hosts: all
   become: true
   tasks:
   roles:
     - role: shelleg.ntp
     - role: role_under_test
+      prometheus_skip_config: true
+      promehtues_use_role_rules: false
       prometheus_components:
         - prometheus

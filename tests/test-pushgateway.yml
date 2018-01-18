@@ -1,19 +1,9 @@
 ---
-- hosts: centos,ubuntu
+- hosts: all
   become: true
   tasks:
   roles:
     - role: shelleg.ntp
-    - role: shelleg.cratedb
-      crate_adapter_testing: true
-      cratedb_adapter_prometheus_init: true
-    - role: ../../
+    - role: role_under_test
       prometheus_components:
-        - prometheus
         - pushgateway
-      prometheus_static_targets:
-      - { name: traefik,
-          host: traefik.mydomain.com,
-          port: 8080,
-          metrics_path: /metrics
-        }
